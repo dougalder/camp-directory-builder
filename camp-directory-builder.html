@@ -1,0 +1,2415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Camp Directory Builder</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='13' fill='%23161311'/%3E%3Crect x='13' y='10' width='38' height='44' rx='3' fill='%23f0ead9'/%3E%3Ccircle cx='32' cy='27' r='8.5' fill='%23e3a857'/%3E%3Cpath d='M17 47c2.5-9 8.5-13.5 15-13.5S44.5 38 47 47' fill='%23e3a857'/%3E%3Crect x='20' y='11.5' width='24' height='4' rx='1.5' fill='%23c1441e'/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&display=swap');
+
+:root{
+  --dev-black:#161311;
+  --dev-black-2:#1e1a17;
+  --paper:#f0ead9;
+  --paper-dim:#c9c0ac;
+  --safelight:#e3a857;
+  --safelight-dim:#8a6a3a;
+  --darkroom-red:#c1441e;
+  --line:#3a332c;
+  --ok:#7fa66b;
+  --err:#c1441e;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--dev-black);
+  color:var(--paper);
+  font-family:'Space Mono', monospace;
+  min-height:100vh;
+  padding:32px 20px 80px;
+}
+.wrap{max-width:980px;margin:0 auto;}
+
+header{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  border-bottom:1px solid var(--line);
+  padding-bottom:18px;
+  margin-bottom:8px;
+  flex-wrap:wrap;
+  gap:10px;
+}
+h1{
+  font-family:'Fraunces', serif;
+  font-weight:600;
+  font-style:italic;
+  font-size:clamp(26px,4vw,38px);
+  margin:0;
+  color:var(--paper);
+  letter-spacing:0.3px;
+}
+h1 .dot{color:var(--darkroom-red);font-style:normal;}
+.tag{
+  font-size:11px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--safelight-dim);
+}
+.subtitle{
+  color:var(--paper-dim);
+  font-size:13px;
+  line-height:1.6;
+  margin:14px 0 28px;
+  max-width:70ch;
+}
+
+/* step indicator */
+.steps{
+  display:flex;
+  gap:0;
+  margin-bottom:32px;
+  border:1px solid var(--line);
+}
+.step-tab{
+  flex:1;
+  padding:14px 10px;
+  text-align:center;
+  font-size:11px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  color:var(--paper-dim);
+  border-right:1px solid var(--line);
+  cursor:default;
+  position:relative;
+}
+.step-tab:last-child{border-right:none;}
+.step-tab .num{
+  display:block;
+  font-family:'Fraunces',serif;
+  font-style:italic;
+  font-size:20px;
+  color:var(--safelight-dim);
+  margin-bottom:4px;
+}
+.step-tab.active{background:var(--dev-black-2);color:var(--paper);}
+.step-tab.active .num{color:var(--safelight);}
+.step-tab.done{color:var(--paper);}
+.step-tab.done .num{color:var(--ok);}
+.step-tab.clickable{cursor:pointer;}
+.step-tab.clickable:hover{background:var(--dev-black-2);}
+
+.step-panel{display:none;}
+.step-panel.active{display:block;}
+
+/* form */
+.field-row{
+  display:flex;
+  gap:16px;
+  margin-bottom:16px;
+  flex-wrap:wrap;
+}
+.field{flex:1;min-width:220px;}
+.field label{
+  display:block;
+  font-size:10px;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  color:var(--safelight-dim);
+  margin-bottom:6px;
+}
+.field input[type=text],
+.field input[type=date],
+.field textarea,
+.field select{
+  width:100%;
+  background:var(--dev-black-2);
+  border:1px solid var(--line);
+  color:var(--paper);
+  font-family:'Space Mono',monospace;
+  font-size:13px;
+  padding:11px 12px;
+  outline:none;
+}
+.field input:focus, .field textarea:focus, .field select:focus{border-color:var(--safelight);}
+.field textarea{resize:vertical;min-height:60px;}
+.field .hint{font-size:10px;color:var(--paper-dim);margin-top:5px;line-height:1.5;}
+
+.dropzone{
+  border:1px dashed var(--line);
+  background:var(--dev-black-2);
+  padding:30px 24px;
+  text-align:center;
+  cursor:pointer;
+  position:relative;
+  transition:border-color .15s ease, background .15s ease;
+}
+.dropzone.drag{border-color:var(--safelight);background:#26201a;}
+.dropzone input{display:none;}
+.dz-label{
+  font-family:'Fraunces',serif;
+  font-style:italic;
+  font-size:18px;
+  color:var(--paper);
+  margin-bottom:6px;
+}
+.dz-sub{font-size:11px;color:var(--paper-dim);letter-spacing:1px;text-transform:uppercase;}
+.dz-preview{margin-top:14px;font-size:12px;color:var(--safelight);}
+.dz-thumb{max-width:160px;max-height:100px;display:block;margin:12px auto 0;border:1px solid var(--line);}
+
+/* buttons */
+button.action{
+  font-family:'Space Mono',monospace;
+  font-size:12px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  padding:12px 22px;
+  background:var(--safelight);
+  color:var(--dev-black);
+  border:none;
+  cursor:pointer;
+  font-weight:700;
+}
+button.action:hover{background:#f0bb6d;}
+button.action:disabled{background:var(--line);color:var(--paper-dim);cursor:not-allowed;}
+button.ghost{
+  font-family:'Space Mono',monospace;
+  font-size:12px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  padding:12px 22px;
+  background:transparent;
+  color:var(--paper);
+  border:1px solid var(--line);
+  cursor:pointer;
+}
+button.ghost:hover{border-color:var(--safelight);color:var(--safelight);}
+button.ghost:disabled{opacity:.35;cursor:not-allowed;}
+.nav-row{
+  display:flex;
+  justify-content:space-between;
+  margin-top:32px;
+  padding-top:20px;
+  border-top:1px solid var(--line);
+}
+
+/* tables */
+table.review{
+  width:100%;
+  border-collapse:collapse;
+  font-size:12px;
+  margin-top:16px;
+}
+table.review th{
+  text-align:left;
+  font-size:10px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  color:var(--safelight-dim);
+  padding:8px 10px;
+  border-bottom:1px solid var(--line);
+}
+table.review td{
+  padding:8px 10px;
+  border-bottom:1px solid var(--line);
+  vertical-align:middle;
+}
+table.review select, table.review input[type=text], table.review input[type=number]{
+  background:var(--dev-black-2);
+  border:1px solid var(--line);
+  color:var(--paper);
+  font-family:'Space Mono',monospace;
+  font-size:11px;
+  padding:6px 8px;
+  width:100%;
+}
+.badge{
+  display:inline-block;
+  font-size:9px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  padding:3px 7px;
+  border:1px solid var(--line);
+}
+.badge.ok{color:var(--ok);border-color:var(--ok);}
+.badge.warn{color:var(--safelight);border-color:var(--safelight-dim);}
+.badge.err{color:var(--darkroom-red);border-color:var(--darkroom-red);}
+.thumb-sm{width:34px;height:34px;object-fit:cover;border:1px solid var(--line);display:block;}
+
+.meta-line{
+  font-size:11px;
+  color:var(--paper-dim);
+  letter-spacing:1px;
+  text-transform:uppercase;
+  margin-top:10px;
+}
+.summary-cards{display:flex;gap:14px;margin-top:18px;flex-wrap:wrap;}
+.summary-card{
+  flex:1;min-width:140px;
+  background:var(--dev-black-2);
+  border:1px solid var(--line);
+  padding:16px;
+}
+.summary-card .n{font-family:'Fraunces',serif;font-style:italic;font-size:28px;color:var(--safelight);}
+.summary-card .l{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--paper-dim);margin-top:4px;}
+
+/* extraction progress panel (reused pattern) */
+.extract-panel{
+  display:none;
+  align-items:center;
+  gap:26px;
+  padding:30px 26px;
+  margin-top:22px;
+  background:var(--dev-black-2);
+  border:1px solid var(--line);
+}
+.extract-panel.active{display:flex;}
+.reel{flex-shrink:0;width:56px;height:56px;animation:reel-spin 1.1s linear infinite;}
+@keyframes reel-spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+.extract-info{flex:1;min-width:0;}
+.extract-title{font-family:'Fraunces',serif;font-style:italic;font-size:18px;color:var(--paper);margin-bottom:6px;}
+.extract-sub{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--safelight-dim);margin-bottom:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.extract-bar-track{height:4px;background:var(--line);overflow:hidden;}
+.extract-bar-fill{height:100%;width:0%;background:var(--safelight);transition:width .25s ease;}
+
+footer{
+  margin-top:60px;
+  padding-top:16px;
+  border-top:1px solid var(--line);
+  font-size:10px;
+  color:var(--paper-dim);
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+
+/* crop adjuster modal */
+.crop-overlay{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(10,8,7,0.82);
+  z-index:1000;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.crop-overlay.active{display:flex;}
+.crop-panel{
+  background:var(--dev-black-2);
+  border:1px solid var(--line);
+  padding:22px;
+  max-width:460px;
+  width:100%;
+}
+.crop-panel.wide{max-width:640px;}
+.edit-panel{
+  max-width:640px;
+  max-height:88vh;
+  overflow-y:auto;
+}
+.edit-fields .field-row{margin-bottom:14px;}
+.crop-title{
+  font-family:'Fraunces',serif;
+  font-style:italic;
+  font-size:18px;
+  color:var(--paper);
+  margin-bottom:14px;
+}
+.crop-stage{
+  position:relative;
+  width:100%;
+  height:360px;
+  background:#0d0b0a;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  user-select:none;
+}
+.crop-stage img{
+  position:absolute;
+  max-width:none;
+  pointer-events:none;
+}
+.crop-frame{
+  position:absolute;
+  border:2px solid var(--safelight);
+  box-shadow:0 0 0 9999px rgba(10,8,7,0.72);
+  cursor:grab;
+  touch-action:none;
+}
+.crop-frame.dragging{cursor:grabbing;}
+.crop-empty{
+  display:none;
+  text-align:center;
+  color:var(--paper-dim);
+  font-family:'Fraunces',serif;
+  font-style:italic;
+  font-size:16px;
+}
+.crop-empty-sub{
+  font-family:'Space Mono',monospace;
+  font-style:normal;
+  font-size:10px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  color:var(--safelight-dim);
+  margin-top:8px;
+}
+.crop-stage.empty .crop-empty{display:block;}
+.crop-stage.empty .crop-frame, .crop-stage.empty img{display:none;}
+.crop-controls{margin-top:16px;}
+.crop-zoom-label{
+  display:block;
+  font-size:10px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  color:var(--safelight-dim);
+  margin-bottom:14px;
+}
+.crop-zoom-label input{width:100%;margin-top:8px;}
+.crop-buttons{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:10px;row-gap:10px;}
+.crop-buttons-row{display:flex;flex-wrap:wrap;gap:10px;row-gap:10px;}
+.crop-buttons-row + .crop-buttons-row{margin-top:10px;justify-content:flex-end;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Camp Directory<span class="dot">.</span> Builder</h1>
+    <div class="tag">Roster + Photos &rarr; Printable PDF</div>
+  </header>
+  <p class="subtitle">Combine a roster CSV with photos extracted from a PDF (or a folder of image files) into a finished, two-column, print-ready camp directory — campers and staff sorted alphabetically, with room left for handwritten notes.</p>
+
+  <div class="steps" id="stepsBar">
+    <div class="step-tab active" data-step="1"><span class="num">1</span>Camp Details</div>
+    <div class="step-tab" data-step="2"><span class="num">2</span>Roster CSV</div>
+    <div class="step-tab" data-step="3"><span class="num">3</span>Photos</div>
+    <div class="step-tab" data-step="4"><span class="num">4</span>Export</div>
+  </div>
+
+  <!-- ===================== STEP 1 ===================== -->
+  <div class="step-panel active" id="panel1">
+    <div class="field-row">
+      <div class="field">
+        <label>Camp / Organization Name <span style="color:var(--darkroom-red)">*</span></label>
+        <input type="text" id="campName" placeholder="e.g. Camp Sunshine">
+      </div>
+      <div class="field">
+        <label>Subtitle <span style="color:var(--darkroom-red)">*</span></label>
+        <input type="text" id="campSubtitle" placeholder="e.g. Location 2026 &middot; Directory">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Footer line (repeats on every page) <span style="color:var(--darkroom-red)">*</span></label>
+        <input type="text" id="footerLine" placeholder="e.g. 2026 Directory">
+      </div>
+      <div class="field">
+        <label>Age reference date <span style="color:var(--darkroom-red)">*</span> <span style="opacity:.6">(used to compute ages from birthdates)</span></label>
+        <input type="date" id="ageRefDate">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Cover quote <span style="opacity:.6">(optional)</span></label>
+        <input type="text" id="coverQuote" placeholder="Optional quote for the cover page">
+      </div>
+      <div class="field">
+        <label>Cover photo credit <span style="opacity:.6">(optional)</span></label>
+        <input type="text" id="coverCredit" placeholder="Optional photo credit line">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field" style="flex:2;">
+        <label>Cover photo <span style="opacity:.6">(optional)</span></label>
+        <div class="dropzone" id="coverDropzone">
+          <input type="file" id="coverInput" accept="image/*">
+          <div class="dz-label">Drop a cover photo here, or click to browse</div>
+          <div class="dz-sub">JPG or PNG</div>
+          <img class="dz-thumb" id="coverThumb" style="display:none;">
+        </div>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field" style="flex:2;">
+        <label style="display:flex;align-items:center;gap:9px;cursor:pointer;text-transform:none;letter-spacing:normal;color:var(--paper);font-size:12px;">
+          <input type="checkbox" id="showSilhouette" checked style="width:16px;height:16px;accent-color:var(--safelight);cursor:pointer;">
+          Show a placeholder silhouette icon for anyone missing a photo
+        </label>
+      </div>
+    </div>
+
+    <div class="meta-line" style="margin-top:24px;margin-bottom:4px;">Typography</div>
+    <p class="field" style="margin:0 0 12px;"><span class="hint" style="display:block;">Font and size for each text element in the generated PDF. Defaults match the current output.</span></p>
+    <table class="review" id="fontTable">
+      <thead><tr><th>Text Element</th><th>Font</th><th>Size</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Person's Name</td>
+          <td><select id="fontNameFamily">
+            <option value="Helvetica" selected>Helvetica (Sans-Serif)</option>
+            <option value="TimesRoman">Times New Roman (Serif)</option>
+            <option value="Courier">Courier (Monospace)</option>
+          </select></td>
+          <td><input type="number" id="fontNameSize" value="12" min="6" max="24" step="0.5" style="width:70px;"></td>
+        </tr>
+        <tr>
+          <td>Age / Address Info</td>
+          <td><select id="fontMetaFamily">
+            <option value="Helvetica" selected>Helvetica (Sans-Serif)</option>
+            <option value="TimesRoman">Times New Roman (Serif)</option>
+            <option value="Courier">Courier (Monospace)</option>
+          </select></td>
+          <td><input type="number" id="fontMetaSize" value="8.7" min="6" max="18" step="0.5" style="width:70px;"></td>
+        </tr>
+        <tr>
+          <td>Description (Bio)</td>
+          <td><select id="fontBioFamily">
+            <option value="Helvetica">Helvetica (Sans-Serif)</option>
+            <option value="TimesRoman" selected>Times New Roman (Serif)</option>
+            <option value="Courier">Courier (Monospace)</option>
+          </select></td>
+          <td><input type="number" id="fontBioSize" value="9" min="6" max="18" step="0.5" style="width:70px;"></td>
+        </tr>
+        <tr>
+          <td>Campers / Staff Divider</td>
+          <td><select id="fontDividerFamily">
+            <option value="Helvetica" selected>Helvetica (Sans-Serif)</option>
+            <option value="TimesRoman">Times New Roman (Serif)</option>
+            <option value="Courier">Courier (Monospace)</option>
+          </select></td>
+          <td><input type="number" id="fontDividerSize" value="9.5" min="6" max="24" step="0.5" style="width:70px;"></td>
+        </tr>
+        <tr>
+          <td>Page Header &amp; Footer</td>
+          <td><select id="fontHeaderFooterFamily">
+            <option value="Helvetica" selected>Helvetica (Sans-Serif)</option>
+            <option value="TimesRoman">Times New Roman (Serif)</option>
+            <option value="Courier">Courier (Monospace)</option>
+          </select></td>
+          <td><input type="number" id="fontHeaderFooterSize" value="8.5" min="6" max="18" step="0.5" style="width:70px;"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="meta-line" style="margin-top:24px;margin-bottom:4px;">Spacing</div>
+    <div class="field-row">
+      <div class="field">
+        <label>Space before dividing line <span style="opacity:.6">(points)</span></label>
+        <input type="number" id="gapBeforeLine" value="20" min="0" max="80" step="1">
+        <span class="hint">Gap between the end of the description and the dividing line.</span>
+      </div>
+      <div class="field">
+        <label>Space before next listing <span style="opacity:.6">(points)</span></label>
+        <input type="number" id="gapAfterLine" value="18" min="0" max="80" step="1">
+        <span class="hint">Gap between the dividing line and the next person's listing.</span>
+      </div>
+    </div>
+
+    <div class="meta-line" id="step1Error" style="display:none;color:var(--darkroom-red);"></div>
+
+    <div class="nav-row">
+      <span></span>
+      <button class="action" id="toStep2">Next: Roster CSV &rarr;</button>
+    </div>
+  </div>
+
+  <!-- ===================== STEP 2 ===================== -->
+  <div class="step-panel" id="panel2">
+    <div class="dropzone" id="csvDropzone">
+      <input type="file" id="csvInput" accept=".csv">
+      <div class="dz-label">Drop your roster CSV here, or click to browse</div>
+      <div class="dz-sub">One row per person</div>
+    </div>
+    <div class="meta-line" id="csvStatus">No CSV loaded.</div>
+
+    <div id="csvReviewWrap" style="display:none;">
+      <div class="nav-row" style="margin-top:20px;border-top:none;padding-top:0;">
+        <button class="ghost" id="saveCsvTop">Save Edits to CSV</button>
+        <div style="display:flex;gap:10px;">
+          <button class="ghost" id="backTo1Top">&larr; Back</button>
+          <button class="action" id="toStep3Top">Next: Photos &rarr;</button>
+        </div>
+      </div>
+      <div class="summary-cards" style="margin-top:20px;">
+        <div class="summary-card"><div class="n" id="countCampers">0</div><div class="l">Campers</div></div>
+        <div class="summary-card"><div class="n" id="countStaff">0</div><div class="l">Staff</div></div>
+        <div class="summary-card"><div class="n" id="countTotal">0</div><div class="l">Total People</div></div>
+      </div>
+      <div class="meta-line" style="margin-top:20px;">Group was auto-detected from the Registrations column &mdash; override any row below.</div>
+      <table class="review" id="csvTable">
+        <thead><tr><th>Name</th><th>Group</th><th>Detected From</th></tr></thead>
+        <tbody id="csvTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="nav-row">
+      <button class="ghost" id="backTo1">&larr; Back</button>
+      <button class="action" id="toStep3" disabled>Next: Photos &rarr;</button>
+    </div>
+  </div>
+
+  <!-- ===================== STEP 3 ===================== -->
+  <div class="step-panel" id="panel3">
+    <div class="field-row">
+      <div class="field" style="min-width:280px;">
+        <div class="dropzone" id="pdfDropzone">
+          <input type="file" id="pdfInput" accept="application/pdf">
+          <div class="dz-label">Drop the directory PDF (with photos) here, or click to browse</div>
+          <div class="dz-sub">Photos will be matched to roster names automatically</div>
+        </div>
+      </div>
+      <div class="field" style="min-width:280px;">
+        <div class="dropzone" id="folderDropzone">
+          <input type="file" id="folderInput" accept="image/*" webkitdirectory directory multiple>
+          <div class="dz-label">Or drop a folder of photos here, or click to browse</div>
+          <div class="dz-sub">Matched to roster names by filename</div>
+        </div>
+      </div>
+    </div>
+    <div class="meta-line" id="pdfStatus">No photos loaded yet.</div>
+
+    <div class="extract-panel" id="extractPanel">
+      <svg class="reel" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="32" cy="32" r="28" fill="none" stroke="var(--line)" stroke-width="3"/>
+        <circle cx="32" cy="32" r="28" fill="none" stroke="var(--safelight)" stroke-width="3" stroke-linecap="round" stroke-dasharray="44 132"/>
+        <circle cx="32" cy="32" r="6" fill="var(--safelight)"/>
+        <circle cx="32" cy="14" r="4" fill="var(--dev-black-2)" stroke="var(--safelight-dim)" stroke-width="2"/>
+        <circle cx="47" cy="41" r="4" fill="var(--dev-black-2)" stroke="var(--safelight-dim)" stroke-width="2"/>
+        <circle cx="17" cy="41" r="4" fill="var(--dev-black-2)" stroke="var(--safelight-dim)" stroke-width="2"/>
+      </svg>
+      <div class="extract-info">
+        <div class="extract-title" id="extractTitle">Developing&hellip;</div>
+        <div class="extract-sub" id="extractSub">Reading pages</div>
+        <div class="extract-bar-track"><div class="extract-bar-fill" id="extractBarFill"></div></div>
+      </div>
+    </div>
+
+    <div id="matchReviewWrap" style="display:none;">
+      <div class="nav-row" style="margin-top:20px;border-top:none;padding-top:0;">
+        <div style="display:flex;gap:10px;">
+          <button class="ghost" id="saveCsvTop2">Save Edits to CSV</button>
+          <button class="ghost" id="downloadAllPhotos">Download All Photos</button>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="ghost" id="backTo2Top">&larr; Back</button>
+          <button class="action" id="toStep4Top">Next: Generate &rarr;</button>
+        </div>
+      </div>
+      <div class="summary-cards" style="margin-top:20px;">
+        <div class="summary-card"><div class="n" id="countMatched">0</div><div class="l">Matched</div></div>
+        <div class="summary-card"><div class="n" id="countUnmatched">0</div><div class="l">No Photo</div></div>
+        <div class="summary-card"><div class="n" id="countExtracted">0</div><div class="l">Photos Extracted</div></div>
+      </div>
+      <div class="meta-line" style="margin-top:20px;">Review matches below &mdash; assign a photo manually for anyone marked "no photo."</div>
+      <table class="review" id="matchTable">
+        <thead><tr><th></th><th>Name</th><th>Group</th><th>Match</th><th>Photo</th><th>Edit Photo</th><th>Edit</th></tr></thead>
+        <tbody id="matchTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="nav-row">
+      <button class="ghost" id="backTo2">&larr; Back</button>
+      <button class="action" id="toStep4" disabled>Next: Generate &rarr;</button>
+    </div>
+  </div>
+
+  <!-- ===================== STEP 4 ===================== -->
+  <div class="step-panel" id="panel4">
+    <div class="summary-cards">
+      <div class="summary-card"><div class="n" id="finalCampers">0</div><div class="l">Campers</div></div>
+      <div class="summary-card"><div class="n" id="finalStaff">0</div><div class="l">Staff</div></div>
+      <div class="summary-card"><div class="n" id="finalPhotos">0</div><div class="l">With Photos</div></div>
+    </div>
+    <p class="subtitle" style="margin-top:22px;">Entries are sorted alphabetically by first name within each section, flowed two-per-row across two columns, with space left under each bio for handwritten notes.</p>
+
+    <div class="extract-panel" id="genPanel">
+      <svg class="reel" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="32" cy="32" r="28" fill="none" stroke="var(--line)" stroke-width="3"/>
+        <circle cx="32" cy="32" r="28" fill="none" stroke="var(--safelight)" stroke-width="3" stroke-linecap="round" stroke-dasharray="44 132"/>
+        <circle cx="32" cy="32" r="6" fill="var(--safelight)"/>
+      </svg>
+      <div class="extract-info">
+        <div class="extract-title" id="genTitle">Laying out pages&hellip;</div>
+        <div class="extract-sub" id="genSub">Working</div>
+        <div class="extract-bar-track"><div class="extract-bar-fill" id="genBarFill"></div></div>
+      </div>
+    </div>
+
+    <div class="nav-row">
+      <button class="ghost" id="backTo3">&larr; Back</button>
+      <button class="action" id="generateBtn">Generate Directory PDF</button>
+    </div>
+  </div>
+
+  <footer>Runs entirely in your browser — nothing is uploaded anywhere.</footer>
+
+  <div class="crop-overlay" id="cropOverlay">
+    <div class="crop-panel wide">
+      <div class="crop-title" id="cropTitle">Adjust photo</div>
+      <div class="crop-stage" id="cropStage">
+        <img id="cropImg" draggable="false">
+        <div class="crop-frame" id="cropFrame"></div>
+        <div class="crop-empty" id="cropEmpty">
+          <div>No photo yet</div>
+          <div class="crop-empty-sub">Import one below</div>
+        </div>
+      </div>
+      <div class="crop-controls">
+        <label class="crop-zoom-label">Zoom
+          <input type="range" id="cropZoom" min="30" max="100" value="100">
+        </label>
+        <input type="file" id="cropUploadInput" accept="image/*" style="display:none;">
+        <div class="crop-buttons-row">
+          <button class="ghost" id="cropUploadBtn">Import Photo</button>
+          <button class="ghost" id="cropRotateLeft" title="Rotate left">&#8634; Rotate Left</button>
+          <button class="ghost" id="cropRotateRight" title="Rotate right">&#8635; Rotate Right</button>
+        </div>
+        <div class="crop-buttons-row">
+          <button class="ghost" id="cropReset">Reset</button>
+          <button class="ghost" id="cropCancel">Cancel</button>
+          <button class="action" id="cropApply">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="crop-overlay" id="editOverlay">
+    <div class="crop-panel edit-panel">
+      <div class="crop-title" id="editTitle">Edit listing</div>
+      <div class="edit-fields">
+        <div class="field-row">
+          <div class="field"><label>First Name</label><input type="text" id="editFirst"></div>
+          <div class="field"><label>Last Name</label><input type="text" id="editLast"></div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Date of Birth <span style="opacity:.6">(YYYY-MM-DD, or MM-DD for no year)</span></label>
+            <input type="text" id="editDob" placeholder="e.g. 2012-08-28 or 08-28">
+          </div>
+          <div class="field">
+            <label>Group</label>
+            <select id="editGroup"><option value="camper">Camper</option><option value="staff">Staff</option></select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Address</label><input type="text" id="editAddress"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>City</label><input type="text" id="editCity"></div>
+          <div class="field"><label>State / Province</label><input type="text" id="editState"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Phone</label><input type="text" id="editPhone"></div>
+          <div class="field"><label>Email</label><input type="text" id="editEmail"></div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Host Family</label>
+            <select id="editHostFamily"><option value="">No</option><option value="yes">Yes</option></select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field" style="flex:1 1 100%;">
+            <label>Directory Bio</label>
+            <textarea id="editBio" style="min-height:140px;"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="crop-buttons" style="margin-top:16px;">
+        <button class="ghost" id="editCancel">Cancel</button>
+        <button class="action" id="editSave">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ============================================================
+// State
+// ============================================================
+const state = {
+  campName: '', campSubtitle: '', footerLine: '', ageRefDate: '',
+  coverQuote: '', coverCredit: '', coverImageBytes: null, coverImageType: null,
+  showSilhouette: true,
+  fontName: { family: 'Helvetica', size: 12 },
+  fontMeta: { family: 'Helvetica', size: 8.7 },
+  fontBio: { family: 'TimesRoman', size: 9 },
+  fontDivider: { family: 'Helvetica', size: 9.5 },
+  fontHeaderFooter: { family: 'Helvetica', size: 8.5 },
+  gapBeforeLine: 20,
+  gapAfterLine: 18,
+  roster: [],           // [{id, first, last, group, dob, city, state, country, email, phone, hostFamily, bio, photo:null}]
+  extractedFrames: [],  // [{name, blob, width, height}]
+};
+
+// ============================================================
+// Wizard navigation
+// ============================================================
+const panels = { 1: document.getElementById('panel1'), 2: document.getElementById('panel2'), 3: document.getElementById('panel3'), 4: document.getElementById('panel4') };
+const tabs = [...document.querySelectorAll('.step-tab')];
+let currentStep = 1;
+let maxUnlockedStep = 1;
+
+function goToStep(n){
+  if (n > maxUnlockedStep) return;
+  currentStep = n;
+  Object.entries(panels).forEach(([k, el]) => el.classList.toggle('active', Number(k) === n));
+  tabs.forEach(t => {
+    const s = Number(t.dataset.step);
+    t.classList.toggle('active', s === n);
+    t.classList.toggle('done', s < maxUnlockedStep);
+    t.classList.toggle('clickable', s <= maxUnlockedStep);
+  });
+}
+function unlockStep(n){
+  maxUnlockedStep = Math.max(maxUnlockedStep, n);
+  tabs.forEach(t => { if (Number(t.dataset.step) <= maxUnlockedStep) t.classList.add('clickable'); });
+}
+tabs.forEach(t => t.addEventListener('click', () => { if (Number(t.dataset.step) <= maxUnlockedStep) goToStep(Number(t.dataset.step)); }));
+
+document.getElementById('toStep2').addEventListener('click', () => {
+  const campNameEl = document.getElementById('campName');
+  const campSubtitleEl = document.getElementById('campSubtitle');
+  const footerLineEl = document.getElementById('footerLine');
+  const ageRefDateEl = document.getElementById('ageRefDate');
+  const errorEl = document.getElementById('step1Error');
+
+  const missing = [];
+  if (!campNameEl.value.trim()) missing.push('Camp / Organization Name');
+  if (!campSubtitleEl.value.trim()) missing.push('Subtitle');
+  if (!footerLineEl.value.trim()) missing.push('Footer line');
+  if (!ageRefDateEl.value) missing.push('Age reference date');
+
+  if (missing.length){
+    errorEl.textContent = 'Missing: ' + missing.join(', ');
+    errorEl.style.display = 'block';
+    const proceed = confirm(
+      'A few fields aren\u2019t filled in yet: ' + missing.join(', ') + '.\n\n' +
+      'You can still continue and fill these in later, but they\u2019ll show up blank on the generated PDF until you do.\n\n' +
+      'Continue anyway?'
+    );
+    if (!proceed) return;
+  } else {
+    errorEl.style.display = 'none';
+  }
+
+  state.campName = campNameEl.value.trim();
+  state.campSubtitle = campSubtitleEl.value.trim();
+  state.footerLine = footerLineEl.value.trim();
+  state.ageRefDate = ageRefDateEl.value;
+  state.coverQuote = document.getElementById('coverQuote').value.trim();
+  state.coverCredit = document.getElementById('coverCredit').value.trim();
+  state.showSilhouette = document.getElementById('showSilhouette').checked;
+
+  state.fontName = {
+    family: document.getElementById('fontNameFamily').value,
+    size: parseFloat(document.getElementById('fontNameSize').value) || 12
+  };
+  state.fontMeta = {
+    family: document.getElementById('fontMetaFamily').value,
+    size: parseFloat(document.getElementById('fontMetaSize').value) || 8.7
+  };
+  state.fontBio = {
+    family: document.getElementById('fontBioFamily').value,
+    size: parseFloat(document.getElementById('fontBioSize').value) || 9
+  };
+  state.fontDivider = {
+    family: document.getElementById('fontDividerFamily').value,
+    size: parseFloat(document.getElementById('fontDividerSize').value) || 9.5
+  };
+  state.fontHeaderFooter = {
+    family: document.getElementById('fontHeaderFooterFamily').value,
+    size: parseFloat(document.getElementById('fontHeaderFooterSize').value) || 8.5
+  };
+  state.gapBeforeLine = parseFloat(document.getElementById('gapBeforeLine').value);
+  if (isNaN(state.gapBeforeLine)) state.gapBeforeLine = 20;
+  state.gapAfterLine = parseFloat(document.getElementById('gapAfterLine').value);
+  if (isNaN(state.gapAfterLine)) state.gapAfterLine = 18;
+  unlockStep(2); goToStep(2);
+});
+
+function bindClick(ids, handler){
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', handler);
+  });
+}
+
+bindClick(['backTo1', 'backTo1Top'], () => goToStep(1));
+bindClick(['backTo2', 'backTo2Top'], () => goToStep(2));
+document.getElementById('backTo3').addEventListener('click', () => goToStep(3));
+bindClick(['toStep3', 'toStep3Top'], () => { unlockStep(3); goToStep(3); });
+bindClick(['toStep4', 'toStep4Top'], () => { unlockStep(4); goToStep(4); prepareStep4Summary(); });
+bindClick(['saveCsvTop', 'saveCsvTop2'], () => exportRosterCSV());
+
+// ============================================================
+// Step 1: cover photo
+// ============================================================
+const coverDropzone = document.getElementById('coverDropzone');
+const coverInput = document.getElementById('coverInput');
+const coverThumb = document.getElementById('coverThumb');
+
+// Default the age-reference date to today; the user can still change it.
+(() => {
+  const el = document.getElementById('ageRefDate');
+  const today = new Date();
+  const iso = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+  el.value = iso;
+})();
+
+coverDropzone.addEventListener('click', () => coverInput.click());
+coverDropzone.addEventListener('dragover', e => { e.preventDefault(); coverDropzone.classList.add('drag'); });
+coverDropzone.addEventListener('dragleave', () => coverDropzone.classList.remove('drag'));
+coverDropzone.addEventListener('drop', e => {
+  e.preventDefault(); coverDropzone.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f) handleCoverFile(f);
+});
+coverInput.addEventListener('change', e => { if (e.target.files[0]) handleCoverFile(e.target.files[0]); });
+
+async function handleCoverFile(file){
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  state.coverImageBytes = bytes;
+  state.coverImageType = file.type.includes('png') ? 'png' : 'jpg';
+  const url = URL.createObjectURL(file);
+  coverThumb.src = url;
+  coverThumb.style.display = 'block';
+}
+
+// ============================================================
+// CSV parsing (handles quoted fields, embedded commas/newlines, "" escapes)
+// ============================================================
+function parseCSV(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++){
+    const c = text[i];
+    if (inQuotes){
+      if (c === '"'){
+        if (text[i + 1] === '"'){ field += '"'; i++; }
+        else inQuotes = false;
+      } else field += c;
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ','){ row.push(field); field = ''; }
+      else if (c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; }
+      else if (c === '\r'){ /* skip, \n handles the break */ }
+      else field += c;
+    }
+  }
+  if (field.length || row.length){ row.push(field); rows.push(row); }
+  if (!rows.length) return [];
+  const headers = rows[0].map(h => h.trim());
+  return rows.slice(1).filter(r => r.some(c => c.trim().length)).map(r => {
+    const obj = {};
+    headers.forEach((h, idx) => obj[h] = (r[idx] || '').trim());
+    return obj;
+  });
+}
+
+function csvEscape(value){
+  const s = value == null ? '' : String(value);
+  if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+
+// Exports the current roster (including every edit made in the app) back out as a
+// CSV using the same column names the app itself recognizes, so it can be handed
+// off, kept as a checkpoint, or re-imported later via "Roster CSV" in Step 2.
+function exportRosterCSV(){
+  if (!state.roster.length){
+    alert('There\u2019s no roster loaded yet to save.');
+    return;
+  }
+  const headers = [
+    'First Name', 'Last Name', 'Date of Birth', 'Registrations',
+    'GI Address', 'GI City', 'GI State/Province', 'GI Email', 'GI Phone',
+    'GI Host Family', 'GI Directory Bio'
+  ];
+  const lines = [headers.map(csvEscape).join(',')];
+  state.roster.forEach(p => {
+    lines.push([
+      p.first, p.last, p.dob,
+      p.group === 'staff' ? 'Staff' : 'Camper',
+      p.address, p.city, p.state, p.email, p.phone,
+      /^y/i.test(p.hostFamily || '') ? 'Yes' : '',
+      p.bio
+    ].map(csvEscape).join(','));
+  });
+  const csvContent = lines.join('\r\n');
+
+  const now = new Date();
+  const stamp = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0')
+    + '_' + String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `roster_edits_${stamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+// Zips up every matched photo, applying each person's saved crop/rotation edits so
+// what downloads matches what would appear in the generated PDF, for offline use.
+async function downloadAllPhotos(){
+  const withPhotos = state.roster.filter(p => p.photo);
+  const btn = document.getElementById('downloadAllPhotos');
+  if (!withPhotos.length){
+    alert('No photos have been matched yet \u2014 nothing to download.');
+    return;
+  }
+  const origText = btn.textContent;
+  btn.disabled = true;
+  try {
+    const zip = new JSZip();
+    const usedNames = new Set();
+    for (let i = 0; i < withPhotos.length; i++){
+      const p = withPhotos[i];
+      btn.textContent = `Zipping (${i + 1}/${withPhotos.length})\u2026`;
+      try {
+        const sq = await cropToSquareJpeg(p.photo.blob, 600, p.cropRect, p.manualRotation);
+        let base = `${p.first}_${p.last}`.replace(/[^\w\-]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || 'photo';
+        let name = base + '.jpg', n = 2;
+        while (usedNames.has(name)){ name = `${base}_${n}.jpg`; n++; }
+        usedNames.add(name);
+        zip.file(name, sq);
+      } catch(e){ console.warn('zip export failed for', p.first, p.last, e); }
+    }
+    const content = await zip.generateAsync({ type: 'blob' });
+    const now = new Date();
+    const stamp = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0')
+      + '_' + String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
+    const url = URL.createObjectURL(content);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `directory_photos_${stamp}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = origText;
+  }
+}
+document.getElementById('downloadAllPhotos').addEventListener('click', downloadAllPhotos);
+
+function findCol(headers, ...candidates){
+  const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const normHeaders = headers.map(norm);
+  for (const cand of candidates){
+    const nc = norm(cand);
+    const idx = normHeaders.findIndex(h => h === nc);
+    if (idx !== -1) return headers[idx];
+  }
+  for (const cand of candidates){
+    const nc = norm(cand);
+    const idx = normHeaders.findIndex(h => h.includes(nc));
+    if (idx !== -1) return headers[idx];
+  }
+  return null;
+}
+
+// ============================================================
+// Step 2: CSV upload + review
+// ============================================================
+const csvDropzone = document.getElementById('csvDropzone');
+const csvInput = document.getElementById('csvInput');
+const csvStatus = document.getElementById('csvStatus');
+const csvReviewWrap = document.getElementById('csvReviewWrap');
+const csvTableBody = document.getElementById('csvTableBody');
+
+csvDropzone.addEventListener('click', () => csvInput.click());
+csvDropzone.addEventListener('dragover', e => { e.preventDefault(); csvDropzone.classList.add('drag'); });
+csvDropzone.addEventListener('dragleave', () => csvDropzone.classList.remove('drag'));
+csvDropzone.addEventListener('drop', e => {
+  e.preventDefault(); csvDropzone.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f) handleCSVFile(f);
+});
+csvInput.addEventListener('change', e => { if (e.target.files[0]) handleCSVFile(e.target.files[0]); });
+
+async function handleCSVFile(file){
+  csvStatus.textContent = 'Reading ' + file.name + '…';
+  const text = await file.text();
+  const rows = parseCSV(text);
+  if (!rows.length){
+    csvStatus.textContent = 'Could not read any rows from that file.';
+    return;
+  }
+  const headers = Object.keys(rows[0]);
+  const col = {
+    first: findCol(headers, 'First Name', 'FirstName', 'First'),
+    last: findCol(headers, 'Last Name', 'LastName', 'Last'),
+    dob: findCol(headers, 'Date of Birth', 'DOB', 'Birthdate'),
+    reg: findCol(headers, 'Registrations', 'Registration', 'Group', 'Role', 'Type'),
+    address: findCol(headers, 'GI Address', 'Address'),
+    city: findCol(headers, 'GI City', 'City'),
+    state: findCol(headers, 'GI State/Province', 'State', 'Province'),
+    zip: findCol(headers, 'GI Zip/Postal', 'Zip', 'Postal'),
+    country: findCol(headers, 'GI Country', 'Country'),
+    email: findCol(headers, 'GI Email', 'Email'),
+    phone: findCol(headers, 'GI Phone', 'Phone'),
+    hostFamily: findCol(headers, 'GI Host Family', 'Host Family'),
+    bio: findCol(headers, 'GI Directory Bio', 'Directory Bio', 'Bio'),
+  };
+
+  state.roster = rows.map((r, idx) => {
+    const first = (col.first ? r[col.first] : '').trim();
+    const last = (col.last ? r[col.last] : '').trim();
+    const regText = (col.reg ? r[col.reg] : '') || '';
+    let group = 'camper', groupSource = 'default';
+    const hasStaff = /staff/i.test(regText);
+    const hasCamper = /camper/i.test(regText);
+    if (hasStaff && !hasCamper){ group = 'staff'; groupSource = 'Registrations'; }
+    else if (hasCamper && !hasStaff){ group = 'camper'; groupSource = 'Registrations'; }
+    else if (hasStaff && hasCamper){ group = 'camper'; groupSource = 'Registrations (both found, defaulted)'; }
+    else { groupSource = 'no match, defaulted'; }
+
+    return {
+      id: 'p' + idx,
+      first, last,
+      dob: (col.dob ? r[col.dob] : '').trim(),
+      group, groupSource,
+      address: (col.address ? r[col.address] : '').trim(),
+      city: (col.city ? r[col.city] : '').trim(),
+      state: (col.state ? r[col.state] : '').trim(),
+      country: (col.country ? r[col.country] : '').trim(),
+      email: (col.email ? r[col.email] : '').trim(),
+      phone: (col.phone ? r[col.phone] : '').trim(),
+      hostFamily: (col.hostFamily ? r[col.hostFamily] : '').trim(),
+      bio: (col.bio ? r[col.bio] : '').trim(),
+      photo: null, photoMatchType: 'none'
+    };
+  }).filter(p => p.first || p.last);
+
+  renderCSVReview();
+  csvStatus.textContent = `Loaded ${state.roster.length} people from ${file.name}.`;
+  csvReviewWrap.style.display = 'block';
+  document.getElementById('toStep3').disabled = state.roster.length === 0;
+  document.getElementById('toStep3Top').disabled = state.roster.length === 0;
+}
+
+function renderCSVReview(){
+  csvTableBody.innerHTML = '';
+  state.roster.forEach(p => {
+    const tr = document.createElement('tr');
+    const nameTd = document.createElement('td');
+    nameTd.textContent = `${p.first} ${p.last}`.trim();
+    const groupTd = document.createElement('td');
+    const sel = document.createElement('select');
+    sel.innerHTML = `<option value="camper">Camper</option><option value="staff">Staff</option>`;
+    sel.value = p.group;
+    sel.addEventListener('change', () => { p.group = sel.value; updateCSVCounts(); });
+    groupTd.appendChild(sel);
+    const srcTd = document.createElement('td');
+    srcTd.textContent = p.groupSource;
+    srcTd.style.color = 'var(--paper-dim)';
+    srcTd.style.fontSize = '10px';
+    tr.appendChild(nameTd); tr.appendChild(groupTd); tr.appendChild(srcTd);
+    csvTableBody.appendChild(tr);
+  });
+  updateCSVCounts();
+}
+function updateCSVCounts(){
+  const campers = state.roster.filter(p => p.group === 'camper').length;
+  const staff = state.roster.filter(p => p.group === 'staff').length;
+  document.getElementById('countCampers').textContent = campers;
+  document.getElementById('countStaff').textContent = staff;
+  document.getElementById('countTotal').textContent = state.roster.length;
+}
+
+// ============================================================
+// Step 3: PDF photo extraction (tested logic, adapted) + matching
+// ============================================================
+let frameCounter = 0;
+
+async function extractFromPdf(file, onProgress){
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  const frames = [];
+  const seenPerPage = new Set();
+  const minSize = 150; // sensible default floor for a directory photo
+
+  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++){
+    if (onProgress) onProgress(pageNum, pdf.numPages);
+    const page = await pdf.getPage(pageNum);
+    const opList = await page.getOperatorList();
+
+    // Walk the operator list simulating the graphics-state matrix stack (save /
+    // restore / transform) so we know the CTM in effect at the moment each image
+    // was actually painted — that CTM encodes any rotation/mirroring the page
+    // applies on top of the image's raw (as-authored) pixel data.
+    const namesInOrder = [];
+    const ctmByName = new Map(); // first-seen CTM per image name
+    let ctm = [1, 0, 0, 1, 0, 0];
+    const stack = [];
+    for (let i = 0; i < opList.fnArray.length; i++){
+      const fn = opList.fnArray[i];
+      if (fn === pdfjsLib.OPS.save){
+        stack.push(ctm.slice());
+      } else if (fn === pdfjsLib.OPS.restore){
+        ctm = stack.pop() || ctm;
+      } else if (fn === pdfjsLib.OPS.transform){
+        ctm = matMultiply(ctm, opList.argsArray[i]);
+      } else if (fn === pdfjsLib.OPS.paintImageXObject || fn === pdfjsLib.OPS.paintImageMaskXObject){
+        const name = opList.argsArray[i][0];
+        if (name){
+          if (!ctmByName.has(name)) ctmByName.set(name, ctm.slice());
+          namesInOrder.push(name);
+        }
+      }
+    }
+    const names = new Set(namesInOrder);
+    if (!names.size) continue;
+
+    const pageFrames = [];
+    for (const name of names){
+      const key = pageNum + ':' + name;
+      if (seenPerPage.has(key)) continue;
+      seenPerPage.add(key);
+      try {
+        const imgObj = await getImageObject(page, name);
+        if (!imgObj) continue;
+        const { width, height } = imgObj;
+        if (!width || !height) continue;
+        if (width < minSize || height < minSize) continue;
+
+        let canvas = imageObjectToCanvas(imgObj);
+        if (!canvas) continue;
+
+        const pageCtm = ctmByName.get(name);
+        if (pageCtm){
+          const { angle, flipped } = getOrientationFromCtm(pageCtm);
+          if (angle !== 0 || flipped) canvas = orientCanvas(canvas, angle, flipped);
+        }
+
+        const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.9));
+        if (!blob) continue;
+
+        frameCounter++;
+        pageFrames.push({
+          id: 'img' + frameCounter, sourceName: file.name, pageNum,
+          width: canvas.width, height: canvas.height, blob, name: '', nameSource: 'none', usedBy: null
+        });
+      } catch(e){ console.warn('skip image', name, e); }
+    }
+
+    if (pageFrames.length){
+      const { text, source } = await detectNameOnPage(page);
+      pageFrames.forEach(f => { f.name = text; f.nameSource = source; });
+      frames.push(...pageFrames);
+    }
+  }
+  return frames;
+}
+
+// PDF matrix concatenation: ctm_new = matMultiply(ctm_old, m) — matches the same
+// convention pdf.js's own canvas backend uses for its `cm` operator.
+function matMultiply(m1, m2){
+  return [
+    m1[0]*m2[0] + m1[1]*m2[2],
+    m1[0]*m2[1] + m1[1]*m2[3],
+    m1[2]*m2[0] + m1[3]*m2[2],
+    m1[2]*m2[1] + m1[3]*m2[3],
+    m1[4]*m2[0] + m1[5]*m2[2] + m2[4],
+    m1[4]*m2[1] + m1[5]*m2[3] + m2[5]
+  ];
+}
+
+function snap90(deg){
+  return (((Math.round(deg / 90) * 90) % 360) + 360) % 360;
+}
+
+// Given the CTM active when an image was painted, return the canvas-space rotation
+// (clockwise degrees, as ctx.rotate expects) and whether it's mirrored, needed to
+// make the raw (as-authored) pixel data match how the page actually displays it.
+// PDF space is Y-up (math convention); canvas space is Y-down, hence the negation.
+function getOrientationFromCtm(ctm){
+  const [a, b, c, d] = ctm;
+  const det = a * d - b * c;
+  const flipped = det < 0;
+  const pdfAngleDeg = Math.atan2(b, a) * 180 / Math.PI;
+  const angle = snap90(-pdfAngleDeg);
+  return { angle, flipped };
+}
+
+function orientCanvas(sourceCanvas, angleDeg, flipped){
+  const rad = angleDeg * Math.PI / 180;
+  const swap = (angleDeg === 90 || angleDeg === 270);
+  const w = sourceCanvas.width, h = sourceCanvas.height;
+  const outW = swap ? h : w, outH = swap ? w : h;
+  const out = document.createElement('canvas');
+  out.width = outW; out.height = outH;
+  const ctx = out.getContext('2d');
+  ctx.save();
+  ctx.translate(outW / 2, outH / 2);
+  if (flipped) ctx.scale(-1, 1);
+  ctx.rotate(rad);
+  ctx.drawImage(sourceCanvas, -w / 2, -h / 2);
+  ctx.restore();
+  return out;
+}
+
+function reconstructPageText(items){
+  const byY = new Map();
+  items.forEach(it => {
+    const y = Math.round(it.transform[5]);
+    if (!byY.has(y)) byY.set(y, []);
+    byY.get(y).push({ text: it.str, start: it.transform[4], end: it.transform[4] + (it.width || 0) });
+  });
+  const ys = [...byY.keys()].sort((a, b) => b - a);
+  const OVERLAP_TOL = 1.0, GLUE_TOL = 1.5, COLUMN_GAP = 30;
+  const lines = [];
+  for (const y of ys){
+    const lineItems = byY.get(y).filter(it => it.text.length).sort((a, b) => a.start - b.start);
+    if (!lineItems.length) continue;
+    const clusters = [];
+    let i = 0;
+    while (i < lineItems.length){
+      let clusterEnd = lineItems[i].end;
+      const clusterStart = lineItems[i].start;
+      let j = i + 1;
+      while (j < lineItems.length && lineItems[j].start <= clusterEnd + OVERLAP_TOL){
+        clusterEnd = Math.max(clusterEnd, lineItems[j].end);
+        j++;
+      }
+      clusters.push({ items: lineItems.slice(i, j), start: clusterStart, end: clusterEnd });
+      i = j;
+    }
+    const pieces = clusters.map(cluster => {
+      const c = cluster.items;
+      if (c.length === 1) return c[0].text;
+      const copyA = c.filter((_, idx) => idx % 2 === 0);
+      let text = copyA[0].text;
+      for (let k = 1; k < copyA.length; k++){
+        const gap = copyA[k].start - copyA[k - 1].end;
+        text += (gap > GLUE_TOL ? ' ' : '') + copyA[k].text;
+      }
+      return text;
+    });
+    let lineStr = pieces[0] || '';
+    for (let k = 1; k < pieces.length; k++){
+      const gap = clusters[k].start - clusters[k - 1].end;
+      lineStr += (gap > COLUMN_GAP ? '\n' : ' ') + pieces[k];
+    }
+    lines.push(lineStr);
+  }
+  return lines.join('\n').split('\n').map(l => l.replace(/[ \t]+/g, ' ').trim()).filter(Boolean).join('\n');
+}
+
+async function detectNameOnPage(page){
+  let content;
+  try { content = await page.getTextContent(); } catch(e){ return { text: '', source: 'none' }; }
+  const fullText = reconstructPageText(content.items);
+  const NAME_WORD = "[A-Z][a-zA-Z'\u2019.-]*";
+  const WS = "[ \\t]";
+  const bannedWords = /^(page|directory|address|phone|email|title|department|office|photo|picture|staff|member|contact|position|extension|ext|room|floor|fax|website|www|http|https|inc|llc|university|college|school|company|organization|division|team|committee|board|welcome|table|contents|index|confidential|roster|yearbook|employee|of|the|and|for|name|date|birth|dob|sex|tags|camp|camper|worktrade|not|back|upload|general|information)$/i;
+
+  function isValidCandidate(words){
+    if (!words.length) return false;
+    if (words.every(w => bannedWords.test(w))) return false;
+    if (bannedWords.test(words[0])) return false;
+    return true;
+  }
+
+  const boundaryRe = /Name\s*:[ \t]*([^\n]+?)[ \t]*(?:Date\b|D\.?O\.?B\.?[ \t]*:|Sex\b|Tags\b)/i;
+  let m = fullText.match(boundaryRe);
+  if (m && m[1]){
+    const val = cleanName(m[1]);
+    const tokenMatch = val.match(new RegExp(`^(${NAME_WORD}(?:${WS}+${NAME_WORD}){0,3})`));
+    if (tokenMatch){
+      const words = tokenMatch[1].split(/[ \t]+/);
+      if (isValidCandidate(words)) return { text: cleanName(words.join(' ')), source: 'label' };
+    }
+  }
+  const looseRe = new RegExp(`Name\\s*:${WS}*(${NAME_WORD}(?:${WS}+${NAME_WORD}){0,3})`, 'i');
+  m = fullText.match(looseRe);
+  if (m && m[1]){
+    const words = cleanName(m[1]).split(/[ \t]+/);
+    if (isValidCandidate(words)) return { text: cleanName(words.join(' ')), source: 'label' };
+  }
+  const lines = fullText.split('\n').filter(Boolean);
+  const nameTokenRe = new RegExp(`^(${NAME_WORD}(?:${WS}+${NAME_WORD}){0,3})`);
+  for (const line of lines.slice(0, 20)){
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    const tokenMatch = trimmed.match(nameTokenRe);
+    if (!tokenMatch) continue;
+    let words = tokenMatch[1].split(/[ \t]+/);
+    while (words.length > 1 && bannedWords.test(words[words.length - 1])) words.pop();
+    if (words.length < 2) continue;
+    if (!isValidCandidate(words)) continue;
+    if (words.some(w => /\d/.test(w))) continue;
+    const candidate = cleanName(words.join(' '));
+    if (candidate.length < 4 || candidate.length > 40) continue;
+    return { text: candidate, source: 'guess' };
+  }
+  return { text: '', source: 'none' };
+}
+
+function cleanName(s){
+  let out = s.replace(/\s+/g, ' ').trim();
+  out = out.replace(/\b(\S+)\s+\1\b/gi, '$1');
+  return out;
+}
+
+function getImageObject(page, name){
+  return new Promise((resolve) => {
+    try { page.objs.get(name, (obj) => resolve(obj)); } catch(e){ resolve(null); }
+  });
+}
+
+function imageObjectToCanvas(imgObj){
+  const { width, height, data, kind, bitmap } = imgObj;
+  if (bitmap){
+    const canvas = document.createElement('canvas');
+    canvas.width = width; canvas.height = height;
+    canvas.getContext('2d').drawImage(bitmap, 0, 0);
+    return canvas;
+  }
+  if (!data) return null;
+  const canvas = document.createElement('canvas');
+  canvas.width = width; canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  const imageData = ctx.createImageData(width, height);
+  const out = imageData.data;
+  if (kind === 3 || data.length === width * height * 4){
+    out.set(data);
+  } else if (kind === 2 || data.length === width * height * 3){
+    for (let i = 0, j = 0; i < data.length; i += 3, j += 4){
+      out[j] = data[i]; out[j+1] = data[i+1]; out[j+2] = data[i+2]; out[j+3] = 255;
+    }
+  } else if (kind === 1 || data.length === Math.ceil(width / 8) * height){
+    const rowBytes = Math.ceil(width / 8);
+    for (let y = 0; y < height; y++){
+      for (let x = 0; x < width; x++){
+        const byte = data[y * rowBytes + (x >> 3)];
+        const bit = (byte >> (7 - (x % 8))) & 1;
+        const v = bit ? 255 : 0;
+        const j = (y * width + x) * 4;
+        out[j] = v; out[j+1] = v; out[j+2] = v; out[j+3] = 255;
+      }
+    }
+  } else if (data.length === width * height){
+    for (let i = 0, j = 0; i < data.length; i++, j += 4){
+      const v = data[i];
+      out[j] = v; out[j+1] = v; out[j+2] = v; out[j+3] = 255;
+    }
+  } else return null;
+  ctx.putImageData(imageData, 0, 0);
+  return canvas;
+}
+
+// ---- name matching ----
+function normalizeName(s){
+  return s.toLowerCase().replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim();
+}
+function levenshtein(a, b){
+  const m = a.length, n = b.length;
+  const dp = Array.from({ length: m + 1 }, (_, i) => [i, ...Array(n).fill(0)]);
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++){
+    for (let j = 1; j <= n; j++){
+      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+    }
+  }
+  return dp[m][n];
+}
+
+function matchPhotosToRoster(){
+  const frames = state.extractedFrames.filter(f => f.name);
+  state.roster.forEach(p => { p.photo = null; p.photoMatchType = 'none'; });
+  frames.forEach(f => f.usedBy = null);
+
+  // exact match pass
+  state.roster.forEach(p => {
+    const target = normalizeName(`${p.first} ${p.last}`);
+    if (!target) return;
+    const hit = frames.find(f => !f.usedBy && normalizeName(f.name) === target);
+    if (hit){ hit.usedBy = p.id; p.photo = hit; p.photoMatchType = 'exact'; }
+  });
+  // fuzzy pass for anyone still unmatched
+  state.roster.filter(p => !p.photo).forEach(p => {
+    const target = normalizeName(`${p.first} ${p.last}`);
+    if (!target) return;
+    let best = null, bestDist = Infinity;
+    frames.filter(f => !f.usedBy).forEach(f => {
+      const cand = normalizeName(f.name);
+      const dist = levenshtein(target, cand);
+      if (dist < bestDist){ bestDist = dist; best = f; }
+    });
+    const threshold = Math.max(2, Math.floor(target.length * 0.2));
+    if (best && bestDist <= threshold){ best.usedBy = p.id; p.photo = best; p.photoMatchType = 'fuzzy'; }
+  });
+}
+
+// ---- Step 3 UI wiring ----
+const pdfDropzone = document.getElementById('pdfDropzone');
+const pdfInput = document.getElementById('pdfInput');
+const folderDropzone = document.getElementById('folderDropzone');
+const folderInput = document.getElementById('folderInput');
+const pdfStatus = document.getElementById('pdfStatus');
+const extractPanel = document.getElementById('extractPanel');
+const extractTitle = document.getElementById('extractTitle');
+const extractSub = document.getElementById('extractSub');
+const extractBarFill = document.getElementById('extractBarFill');
+const matchReviewWrap = document.getElementById('matchReviewWrap');
+const matchTableBody = document.getElementById('matchTableBody');
+
+pdfDropzone.addEventListener('click', () => pdfInput.click());
+pdfDropzone.addEventListener('dragover', e => { e.preventDefault(); pdfDropzone.classList.add('drag'); });
+pdfDropzone.addEventListener('dragleave', () => pdfDropzone.classList.remove('drag'));
+pdfDropzone.addEventListener('drop', e => {
+  e.preventDefault(); pdfDropzone.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f) handlePdfFile(f);
+});
+pdfInput.addEventListener('change', e => { if (e.target.files[0]) handlePdfFile(e.target.files[0]); });
+
+folderDropzone.addEventListener('click', () => folderInput.click());
+folderDropzone.addEventListener('dragover', e => { e.preventDefault(); folderDropzone.classList.add('drag'); });
+folderDropzone.addEventListener('dragleave', () => folderDropzone.classList.remove('drag'));
+folderDropzone.addEventListener('drop', async e => {
+  e.preventDefault(); folderDropzone.classList.remove('drag');
+  const items = e.dataTransfer.files;
+  if (items && items.length) await handlePhotoFolder(items);
+});
+folderInput.addEventListener('change', async e => {
+  if (e.target.files.length) await handlePhotoFolder(e.target.files);
+  e.target.value = '';
+});
+
+function fileNameToPersonName(filename){
+  return filename.replace(/\.[^.]+$/, '').replace(/[_\-]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+async function handlePhotoFolder(fileList){
+  const imageFiles = [...fileList].filter(f => /^image\//.test(f.type) || /\.(jpe?g|png|webp|heic)$/i.test(f.name));
+  if (!imageFiles.length){
+    pdfStatus.textContent = 'No image files found in that folder.';
+    return;
+  }
+  pdfStatus.textContent = `Reading ${imageFiles.length} photo${imageFiles.length === 1 ? '' : 's'}\u2026`;
+  const newFrames = imageFiles.map(file => {
+    frameCounter++;
+    return {
+      id: 'folder' + frameCounter,
+      sourceName: file.name,
+      pageNum: null,
+      width: 0, height: 0,
+      blob: file,
+      name: fileNameToPersonName(file.name),
+      nameSource: 'filename',
+      usedBy: null
+    };
+  });
+  state.extractedFrames = state.extractedFrames.concat(newFrames);
+  matchPhotosToRoster();
+  renderMatchReview();
+  pdfStatus.textContent = `Loaded ${imageFiles.length} photo${imageFiles.length === 1 ? '' : 's'} from folder \u2014 ${state.extractedFrames.length} total available.`;
+  document.getElementById('toStep4').disabled = false;
+  document.getElementById('toStep4Top').disabled = false;
+  matchReviewWrap.style.display = 'block';
+}
+
+async function handlePdfFile(file){
+  pdfStatus.textContent = 'Reading ' + file.name + '…';
+  extractPanel.classList.add('active');
+  extractTitle.textContent = 'Developing ' + file.name;
+  try {
+    const frames = await extractFromPdf(file, (pageNum, pageCount) => {
+      extractSub.textContent = `Page ${pageNum} of ${pageCount}`;
+      extractBarFill.style.width = `${Math.round((pageNum / pageCount) * 100)}%`;
+    });
+    state.extractedFrames = state.extractedFrames.concat(frames);
+    matchPhotosToRoster();
+    renderMatchReview();
+    pdfStatus.textContent = `Extracted ${frames.length} photos from ${file.name} \u2014 ${state.extractedFrames.length} total available.`;
+    document.getElementById('toStep4').disabled = false;
+    document.getElementById('toStep4Top').disabled = false;
+    matchReviewWrap.style.display = 'block';
+  } catch(err){
+    console.error(err);
+    pdfStatus.textContent = 'Something went wrong reading that PDF: ' + err.message;
+  } finally {
+    extractPanel.classList.remove('active');
+  }
+}
+
+function frameThumbUrl(frame){
+  if (!frame._url) frame._url = URL.createObjectURL(frame.blob);
+  return frame._url;
+}
+
+function renderMatchReview(){
+  matchTableBody.innerHTML = '';
+  const frames = state.extractedFrames;
+  const sortedRoster = [...state.roster].sort((a, b) => a.first.localeCompare(b.first));
+
+  sortedRoster.forEach(p => {
+    const tr = document.createElement('tr');
+
+    const thumbTd = document.createElement('td');
+    if (p.photo){
+      const img = document.createElement('img');
+      img.className = 'thumb-sm';
+      img.src = frameThumbUrl(p.photo);
+      thumbTd.appendChild(img);
+    }
+
+    const nameTd = document.createElement('td');
+    nameTd.textContent = `${p.first} ${p.last}`.trim();
+
+    const groupTd = document.createElement('td');
+    groupTd.textContent = p.group === 'staff' ? 'Staff' : 'Camper';
+    groupTd.style.color = 'var(--paper-dim)';
+    groupTd.style.fontSize = '11px';
+
+    const matchTd = document.createElement('td');
+    const badge = document.createElement('span');
+    if (p.photo){
+      badge.className = 'badge ' + (p.photoMatchType === 'exact' ? 'ok' : 'warn');
+      badge.textContent = p.photoMatchType === 'exact' ? 'matched' : 'fuzzy match';
+    } else {
+      badge.className = 'badge err';
+      badge.textContent = 'no photo';
+    }
+    matchTd.appendChild(badge);
+
+    const pickTd = document.createElement('td');
+    const sel = document.createElement('select');
+    const noneOpt = document.createElement('option');
+    noneOpt.value = ''; noneOpt.textContent = '— No photo —';
+    sel.appendChild(noneOpt);
+    frames.forEach((f, idx) => {
+      const opt = document.createElement('option');
+      opt.value = String(idx);
+      const label = f.name ? f.name : `Unnamed (p.${f.pageNum})`;
+      const takenNote = (f.usedBy && f.usedBy !== p.id) ? ' — in use' : '';
+      opt.textContent = `${label}${takenNote}`;
+      sel.appendChild(opt);
+    });
+    sel.value = p.photo ? String(frames.indexOf(p.photo)) : '';
+    sel.addEventListener('change', () => {
+      if (p.photo) p.photo.usedBy = null;
+      p.cropRect = null; // old crop no longer applies to a different photo
+      p.manualRotation = 0;
+      if (sel.value === ''){ p.photo = null; p.photoMatchType = 'none'; }
+      else {
+        const f = frames[Number(sel.value)];
+        if (f.usedBy && f.usedBy !== p.id){
+          const prevPerson = state.roster.find(x => x.id === f.usedBy);
+          if (prevPerson){ prevPerson.photo = null; prevPerson.photoMatchType = 'none'; }
+        }
+        f.usedBy = p.id;
+        p.photo = f; p.photoMatchType = 'manual';
+      }
+      renderMatchReview();
+    });
+    pickTd.appendChild(sel);
+
+    const cropTd = document.createElement('td');
+    const cropBtn = document.createElement('button');
+    cropBtn.className = 'ghost';
+    cropBtn.style.padding = '6px 10px';
+    cropBtn.style.fontSize = '10px';
+    cropBtn.textContent = p.photo ? 'Edit Photo' : 'Add Photo';
+    cropBtn.addEventListener('click', () => openCropper(p));
+    cropTd.appendChild(cropBtn);
+
+    const editTd = document.createElement('td');
+    const editBtn = document.createElement('button');
+    editBtn.className = 'ghost';
+    editBtn.style.padding = '6px 10px';
+    editBtn.style.fontSize = '10px';
+    editBtn.textContent = 'Edit';
+    editBtn.addEventListener('click', () => openEditModal(p));
+    editTd.appendChild(editBtn);
+
+    tr.appendChild(thumbTd); tr.appendChild(nameTd); tr.appendChild(groupTd); tr.appendChild(matchTd); tr.appendChild(pickTd); tr.appendChild(cropTd); tr.appendChild(editTd);
+    matchTableBody.appendChild(tr);
+  });
+
+  const matched = state.roster.filter(p => p.photo).length;
+  document.getElementById('countMatched').textContent = matched;
+  document.getElementById('countUnmatched').textContent = state.roster.length - matched;
+  document.getElementById('countExtracted').textContent = frames.length;
+}
+
+// ---- Interactive crop adjuster ----
+const cropOverlay = document.getElementById('cropOverlay');
+const cropTitle = document.getElementById('cropTitle');
+const cropStage = document.getElementById('cropStage');
+const cropImgEl = document.getElementById('cropImg');
+const cropFrameEl = document.getElementById('cropFrame');
+const cropZoom = document.getElementById('cropZoom');
+
+let cropTarget = null;   // the roster person currently being edited
+let cropNatural = { w: 0, h: 0 };
+let cropDisplay = { w: 0, h: 0, offX: 0, offY: 0 }; // where the image sits inside the stage
+let cropBox = { size: 0, x: 0, y: 0 }; // current frame in stage-pixel coords
+let dragState = null;
+let cropRotation = 0;     // working rotation for the cropper session (degrees, 0/90/180/270)
+let cropOriginalBlob = null;
+
+async function makeRotatedBlob(blob, angleDeg){
+  if (!angleDeg) return blob;
+  const url = URL.createObjectURL(blob);
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = reject;
+      el.src = url;
+    });
+    const rotated = rotateSource(img, angleDeg, img.width, img.height);
+    return await new Promise(res => rotated.source.toBlob(res, 'image/jpeg', 0.92));
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+async function refreshCropperImage(useStoredRect){
+  const displayBlob = cropRotation ? await makeRotatedBlob(cropOriginalBlob, cropRotation) : cropOriginalBlob;
+  const url = URL.createObjectURL(displayBlob);
+  await new Promise(resolve => { cropImgEl.onload = resolve; cropImgEl.src = url; });
+
+  cropNatural = { w: cropImgEl.naturalWidth, h: cropImgEl.naturalHeight };
+  const stageW = cropStage.clientWidth, stageH = cropStage.clientHeight;
+  const scale = Math.min(stageW / cropNatural.w, stageH / cropNatural.h);
+  const dispW = cropNatural.w * scale, dispH = cropNatural.h * scale;
+  const offX = (stageW - dispW) / 2, offY = (stageH - dispH) / 2;
+  cropDisplay = { w: dispW, h: dispH, offX, offY };
+  cropImgEl.style.width = dispW + 'px';
+  cropImgEl.style.height = dispH + 'px';
+  cropImgEl.style.left = offX + 'px';
+  cropImgEl.style.top = offY + 'px';
+
+  // Initialize the frame from the person's saved cropRect (only valid if we're
+  // still at the rotation it was saved against), or a sensible full-cover default.
+  const minDispDim = Math.min(dispW, dispH);
+  const rect = (useStoredRect && cropTarget.cropRect) ? cropTarget.cropRect : { cx: 0.5, cy: 0.5, size: 1 };
+  cropZoom.value = String(Math.round(rect.size * 100));
+  const boxSize = rect.size * minDispDim;
+  cropBox = {
+    size: boxSize,
+    x: offX + rect.cx * dispW - boxSize / 2,
+    y: offY + rect.cy * dispH - boxSize / 2
+  };
+  clampCropBox();
+  renderCropFrame();
+}
+
+function setCropEmptyState(isEmpty){
+  cropStage.classList.toggle('empty', isEmpty);
+  const applyBtn = document.getElementById('cropApply');
+  const resetBtn = document.getElementById('cropReset');
+  const rotLeft = document.getElementById('cropRotateLeft');
+  const rotRight = document.getElementById('cropRotateRight');
+  [applyBtn, resetBtn, rotLeft, rotRight, cropZoom].forEach(el => { el.disabled = isEmpty; });
+}
+
+function openCropper(person){
+  cropTarget = person;
+  cropRotation = person.manualRotation || 0;
+  if (person.photo){
+    cropOriginalBlob = person.photo.blob;
+    cropTitle.textContent = `Edit Photo \u2014 ${person.first} ${person.last}`.trim();
+    setCropEmptyState(false);
+    refreshCropperImage(true);
+  } else {
+    cropOriginalBlob = null;
+    cropTitle.textContent = `Edit Photo \u2014 ${person.first} ${person.last}`.trim();
+    setCropEmptyState(true);
+  }
+  cropOverlay.classList.add('active');
+}
+
+document.getElementById('cropUploadBtn').addEventListener('click', () => {
+  document.getElementById('cropUploadInput').click();
+});
+document.getElementById('cropUploadInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = ''; // allow re-selecting the same file later
+  if (!file || !cropTarget) return;
+
+  // The imported file doesn't need to already be named correctly — rename it (for
+  // display/matching purposes) to match the record it's being attached to.
+  const personName = `${cropTarget.first} ${cropTarget.last}`.trim() || 'Unnamed';
+  const extMatch = /\.[a-z0-9]+$/i.exec(file.name || '');
+  const ext = extMatch ? extMatch[0] : '.jpg';
+  const renamedFile = personName.replace(/[^\w\- ]+/g, '').trim() + ext;
+
+  frameCounter++;
+  const newFrame = {
+    id: 'upload' + frameCounter,
+    sourceName: renamedFile,
+    pageNum: null,
+    width: 0, height: 0,
+    blob: file,
+    name: personName,
+    nameSource: 'imported',
+    usedBy: cropTarget.id
+  };
+  // release whatever this person was previously using, if anything
+  if (cropTarget.photo) cropTarget.photo.usedBy = null;
+  state.extractedFrames.push(newFrame);
+  cropTarget.photo = newFrame;
+  cropTarget.photoMatchType = 'uploaded';
+  cropTarget.cropRect = null;
+  cropTarget.manualRotation = 0;
+
+  cropOriginalBlob = newFrame.blob;
+  cropRotation = 0;
+  setCropEmptyState(false);
+  renderMatchReview();
+  await refreshCropperImage(false);
+});
+
+// ---- Edit-listing modal ----
+const editOverlay = document.getElementById('editOverlay');
+const editTitle = document.getElementById('editTitle');
+let editTarget = null;
+
+function openEditModal(person){
+  editTarget = person;
+  editTitle.textContent = `Edit listing \u2014 ${person.first} ${person.last}`.trim();
+  document.getElementById('editFirst').value = person.first || '';
+  document.getElementById('editLast').value = person.last || '';
+  document.getElementById('editDob').value = person.dob || '';
+  document.getElementById('editGroup').value = person.group || 'camper';
+  document.getElementById('editAddress').value = person.address || '';
+  document.getElementById('editCity').value = person.city || '';
+  document.getElementById('editState').value = person.state || '';
+  document.getElementById('editPhone').value = person.phone || '';
+  document.getElementById('editEmail').value = person.email || '';
+  document.getElementById('editHostFamily').value = /^y/i.test(person.hostFamily || '') ? 'yes' : '';
+  document.getElementById('editBio').value = person.bio || '';
+  editOverlay.classList.add('active');
+}
+
+document.getElementById('editCancel').addEventListener('click', () => {
+  editOverlay.classList.remove('active');
+  editTarget = null;
+});
+
+document.getElementById('editSave').addEventListener('click', () => {
+  if (!editTarget) return;
+  editTarget.first = document.getElementById('editFirst').value.trim();
+  editTarget.last = document.getElementById('editLast').value.trim();
+  editTarget.dob = document.getElementById('editDob').value.trim();
+  editTarget.group = document.getElementById('editGroup').value;
+  editTarget.groupSource = 'manually edited';
+  editTarget.address = document.getElementById('editAddress').value.trim();
+  editTarget.city = document.getElementById('editCity').value.trim();
+  editTarget.state = document.getElementById('editState').value.trim();
+  editTarget.phone = document.getElementById('editPhone').value.trim();
+  editTarget.email = document.getElementById('editEmail').value.trim();
+  editTarget.hostFamily = document.getElementById('editHostFamily').value;
+  editTarget.bio = document.getElementById('editBio').value;
+  editOverlay.classList.remove('active');
+  editTarget = null;
+  renderMatchReview();
+  if (typeof renderCSVReview === 'function' && csvReviewWrap && csvReviewWrap.style.display !== 'none'){
+    renderCSVReview();
+  }
+});
+
+function clampCropBox(){
+  const maxSize = Math.min(cropDisplay.w, cropDisplay.h);
+  cropBox.size = Math.max(24, Math.min(cropBox.size, maxSize));
+  cropBox.x = Math.max(cropDisplay.offX, Math.min(cropDisplay.offX + cropDisplay.w - cropBox.size, cropBox.x));
+  cropBox.y = Math.max(cropDisplay.offY, Math.min(cropDisplay.offY + cropDisplay.h - cropBox.size, cropBox.y));
+}
+
+function renderCropFrame(){
+  cropFrameEl.style.width = cropBox.size + 'px';
+  cropFrameEl.style.height = cropBox.size + 'px';
+  cropFrameEl.style.left = cropBox.x + 'px';
+  cropFrameEl.style.top = cropBox.y + 'px';
+}
+
+cropFrameEl.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  dragState = { startX: e.clientX, startY: e.clientY, boxX: cropBox.x, boxY: cropBox.y };
+  cropFrameEl.classList.add('dragging');
+  cropFrameEl.setPointerCapture(e.pointerId);
+});
+cropFrameEl.addEventListener('pointermove', (e) => {
+  if (!dragState) return;
+  cropBox.x = dragState.boxX + (e.clientX - dragState.startX);
+  cropBox.y = dragState.boxY + (e.clientY - dragState.startY);
+  clampCropBox();
+  renderCropFrame();
+});
+function endCropDrag(e){
+  dragState = null;
+  cropFrameEl.classList.remove('dragging');
+}
+cropFrameEl.addEventListener('pointerup', endCropDrag);
+cropFrameEl.addEventListener('pointercancel', endCropDrag);
+
+cropZoom.addEventListener('input', () => {
+  const minDispDim = Math.min(cropDisplay.w, cropDisplay.h);
+  const cx = cropBox.x + cropBox.size / 2, cy = cropBox.y + cropBox.size / 2;
+  cropBox.size = (Number(cropZoom.value) / 100) * minDispDim;
+  cropBox.x = cx - cropBox.size / 2;
+  cropBox.y = cy - cropBox.size / 2;
+  clampCropBox();
+  renderCropFrame();
+});
+
+document.getElementById('cropRotateLeft').addEventListener('click', () => {
+  cropRotation = (cropRotation - 90 + 360) % 360;
+  refreshCropperImage(false);
+});
+document.getElementById('cropRotateRight').addEventListener('click', () => {
+  cropRotation = (cropRotation + 90) % 360;
+  refreshCropperImage(false);
+});
+
+document.getElementById('cropReset').addEventListener('click', () => {
+  cropRotation = 0;
+  refreshCropperImage(false);
+});
+
+document.getElementById('cropCancel').addEventListener('click', () => {
+  cropOverlay.classList.remove('active');
+  cropTarget = null;
+});
+
+document.getElementById('cropApply').addEventListener('click', () => {
+  if (!cropTarget) return;
+  const minDispDim = Math.min(cropDisplay.w, cropDisplay.h);
+  const cx = (cropBox.x + cropBox.size / 2 - cropDisplay.offX) / cropDisplay.w;
+  const cy = (cropBox.y + cropBox.size / 2 - cropDisplay.offY) / cropDisplay.h;
+  const size = cropBox.size / minDispDim;
+  cropTarget.cropRect = { cx, cy, size };
+  cropTarget.manualRotation = cropRotation;
+  cropOverlay.classList.remove('active');
+  cropTarget = null;
+  renderMatchReview();
+});
+
+function prepareStep4Summary(){
+  const campers = state.roster.filter(p => p.group === 'camper').length;
+  const staff = state.roster.filter(p => p.group === 'staff').length;
+  const withPhotos = state.roster.filter(p => p.photo).length;
+  document.getElementById('finalCampers').textContent = campers;
+  document.getElementById('finalStaff').textContent = staff;
+  document.getElementById('finalPhotos').textContent = withPhotos;
+}
+
+// ============================================================
+// Step 4: PDF generation
+// ============================================================
+const PAGE_W = 612, PAGE_H = 792;
+const MARGIN_X = 54, MARGIN_TOP = 78, MARGIN_BOTTOM = 54;
+const COL_GAP = 22;
+const COL_W = (PAGE_W - MARGIN_X * 2 - COL_GAP) / 2;
+const COL_TOP = PAGE_H - MARGIN_TOP;
+const PHOTO_SIZE = 58;
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// Standard 14 PDF fonts only support WinAnsi (Latin-1 + a specific set of "smart
+// typography" glyphs) encoding. Rather than blacklist bad ranges (easy to miss one,
+// as happened with U+2015 HORIZONTAL BAR), explicitly allowlist the handful of
+// General Punctuation characters WinAnsi actually supports and neutralize the rest.
+const WINANSI_SAFE_PUNCT = new Set(['\u2013', '\u2014', '\u2018', '\u2019', '\u201A', '\u201C', '\u201D', '\u201E', '\u2020', '\u2021', '\u2022', '\u2026', '\u2030', '\u2039', '\u203A', '\u2044']);
+function sanitizeForPdf(s){
+  if (!s) return '';
+  return Array.from(String(s))
+    .filter(ch => ch.codePointAt(0) <= 0xFFFF)
+    .map(ch => {
+      const code = ch.codePointAt(0);
+      if (code >= 0x2000 && code <= 0x206F){
+        if (WINANSI_SAFE_PUNCT.has(ch)) return ch;
+        if (code >= 0x2010 && code <= 0x2015) return '-'; // hyphen/dash variants -> plain hyphen
+        return ' '; // other spaces/punctuation in this block
+      }
+      if ((code >= 0x2190 && code <= 0x2BFF) || code === 0xFE0F) return ' '; // arrows/symbols/dingbats/emoji-ish
+      return ch;
+    })
+    .join('');
+}
+
+// Breaks a single unspaced token (e.g. a long email or URL) into pieces that fit
+// maxWidth, preferring to break right after @ . - _ / for readability, falling
+// back to a hard character break if a piece is still too long on its own.
+function breakLongToken(word, font, size, maxWidth){
+  const segments = word.match(/[^@.\-_/]*[@.\-_/]|[^@.\-_/]+$/g) || [word];
+  const chunks = [];
+  let cur = '';
+  segments.forEach(seg => {
+    const test = cur + seg;
+    if (font.widthOfTextAtSize(test, size) > maxWidth && cur){
+      chunks.push(cur);
+      cur = seg;
+    } else {
+      cur = test;
+    }
+  });
+  if (cur) chunks.push(cur);
+
+  const finalChunks = [];
+  chunks.forEach(chunk => {
+    if (font.widthOfTextAtSize(chunk, size) <= maxWidth){ finalChunks.push(chunk); return; }
+    let piece = '';
+    for (const ch of chunk){
+      const test = piece + ch;
+      if (font.widthOfTextAtSize(test, size) > maxWidth && piece){
+        finalChunks.push(piece);
+        piece = ch;
+      } else piece = test;
+    }
+    if (piece) finalChunks.push(piece);
+  });
+  return finalChunks.length ? finalChunks : [word];
+}
+
+function wrapText(font, size, maxWidth, text){
+  const clean = sanitizeForPdf(text).replace(/\r\n/g, '\n');
+  // Any run of one or more newlines (including double/triple carriage returns from
+  // pasted text) becomes a single hard line break — never a blank spacer line, to
+  // keep paragraph spacing tight.
+  const normalized = clean
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n+/g, '\n');
+  const paragraphs = normalized.split('\n').map(p => p.trim()).filter(p => p.length);
+  const lines = [];
+  paragraphs.forEach((para, pIdx) => {
+    const words = para.split(/\s+/).filter(Boolean);
+    let line = '';
+    words.forEach(word => {
+      if (font.widthOfTextAtSize(word, size) > maxWidth){
+        // The word alone is too long to fit any line (e.g. a long email) — break it.
+        if (line){ lines.push(line); line = ''; }
+        const chunks = breakLongToken(word, font, size, maxWidth);
+        chunks.slice(0, -1).forEach(c => lines.push(c));
+        line = chunks[chunks.length - 1] || '';
+        return;
+      }
+      const test = line ? line + ' ' + word : word;
+      if (font.widthOfTextAtSize(test, size) > maxWidth && line){
+        lines.push(line);
+        line = word;
+      } else {
+        line = test;
+      }
+    });
+    if (line) lines.push(line);
+  });
+  return lines.length ? lines : [''];
+}
+
+function formatAgeLine(dobRaw, refDateStr){
+  if (!dobRaw) return null;
+  const parts = dobRaw.split('-').map(s => parseInt(s, 10));
+  let year = null, month, day;
+  if (parts.length === 3 && parts.every(n => !isNaN(n))) [year, month, day] = parts;
+  else if (parts.length === 2 && parts.every(n => !isNaN(n))) [month, day] = parts;
+  else return null;
+  if (!month || !day || month < 1 || month > 12) return null;
+  const dateLabel = MONTHS[month - 1] + ' ' + day + (year ? ', ' + year : '');
+  if (year){
+    const ref = refDateStr ? new Date(refDateStr + 'T00:00:00') : new Date();
+    let age = ref.getFullYear() - year;
+    const refMonth = ref.getMonth() + 1, refDay = ref.getDate();
+    if (refMonth < month || (refMonth === month && refDay < day)) age--;
+    return `Age ${age}  \u00b7  ${dateLabel}`;
+  }
+  return `Birthday: ${dateLabel}`;
+}
+
+async function blobToUint8(blob){
+  return new Uint8Array(await blob.arrayBuffer());
+}
+
+// Crop a photo blob to a square JPEG (cover-fit, centered) for uniform grid thumbnails.
+// Rotates an image/canvas source by a multiple of 90 degrees (clockwise-positive,
+// as a "rotate right" button would expect) and returns a canvas with the correctly
+// swapped dimensions. angleDeg=0 returns the source untouched.
+function rotateSource(source, angleDeg, w, h){
+  const norm = ((Math.round(angleDeg / 90) * 90) % 360 + 360) % 360;
+  if (!norm) return { source, width: w, height: h };
+  const swap = (norm === 90 || norm === 270);
+  const outW = swap ? h : w, outH = swap ? w : h;
+  const canvas = document.createElement('canvas');
+  canvas.width = outW; canvas.height = outH;
+  const ctx = canvas.getContext('2d');
+  ctx.translate(outW / 2, outH / 2);
+  ctx.rotate(norm * Math.PI / 180);
+  ctx.drawImage(source, -w / 2, -h / 2);
+  return { source: canvas, width: outW, height: outH };
+}
+
+async function cropToSquareJpeg(blob, size, cropRect, manualRotation){
+  const url = URL.createObjectURL(blob);
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = reject;
+      el.src = url;
+    });
+    const rotated = rotateSource(img, manualRotation || 0, img.width, img.height);
+    const source = rotated.source, srcW = rotated.width, srcH = rotated.height;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = size; canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, size, size);
+
+    // cropRect is normalized: cx/cy = center as a fraction of image width/height,
+    // size = crop square's side length as a fraction of the image's smaller
+    // dimension. Default (no cropRect) reproduces the old center-cover behavior.
+    const minDim = Math.min(srcW, srcH);
+    const rect = cropRect || { cx: 0.5, cy: 0.5, size: 1 };
+    const srcSize = Math.max(20, Math.min(minDim, rect.size * minDim));
+    let srcX = rect.cx * srcW - srcSize / 2;
+    let srcY = rect.cy * srcH - srcSize / 2;
+    srcX = Math.max(0, Math.min(srcW - srcSize, srcX));
+    srcY = Math.max(0, Math.min(srcH - srcSize, srcY));
+
+    ctx.drawImage(source, srcX, srcY, srcSize, srcSize, 0, 0, size, size);
+    const outBlob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.88));
+    return await blobToUint8(outBlob);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+async function generateDirectoryPDF(onProgress){
+  const { PDFDocument, StandardFonts, rgb, rectangle, clip, endPath, pushGraphicsState, popGraphicsState } = PDFLib;
+  const pdfDoc = await PDFDocument.create();
+  const fHeavy = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const fReg = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const fItalic = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
+  const fSerif = await pdfDoc.embedFont(StandardFonts.TimesRoman);
+  const fSerifBold = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
+  const fSerifItalic = await pdfDoc.embedFont(StandardFonts.TimesRomanItalic);
+
+  // Standard-14 font lookup for the 5 user-configurable text roles. These fonts
+  // require no embedding/network fetch and are guaranteed to render identically
+  // everywhere, which is why the selector is limited to this reliable set.
+  const FONT_LOOKUP = {
+    'Helvetica-Regular': fReg,
+    'Helvetica-Bold': fHeavy,
+    'TimesRoman-Regular': fSerif,
+    'TimesRoman-Bold': fSerifBold,
+    'Courier-Regular': await pdfDoc.embedFont(StandardFonts.Courier),
+    'Courier-Bold': await pdfDoc.embedFont(StandardFonts.CourierBold),
+  };
+  function getFont(family, weight){
+    return FONT_LOOKUP[`${family}-${weight}`] || FONT_LOOKUP['Helvetica-' + weight];
+  }
+  const personNameFont = getFont(state.fontName.family, 'Bold');
+  const personNameSize = state.fontName.size;
+  const personNameLineH = personNameSize * (14 / 12);
+  const metaFont = getFont(state.fontMeta.family, 'Regular');
+  const metaSize = state.fontMeta.size;
+  const metaLineH = metaSize * (11.5 / 8.7);
+  const bioFont = getFont(state.fontBio.family, 'Regular');
+  const bioSize = state.fontBio.size;
+  const bioLineH = bioSize * (12 / 9);
+  const dividerFont = getFont(state.fontDivider.family, 'Bold');
+  const dividerSize = state.fontDivider.size;
+  const hfFont = getFont(state.fontHeaderFooter.family, 'Regular');
+  const hfSize = state.fontHeaderFooter.size;
+
+  // Gap 1: space between the end of the description and the dividing line.
+  // Gap 2: space between the dividing line and the start of the next listing.
+  const gapBeforeLine = typeof state.gapBeforeLine === 'number' ? state.gapBeforeLine : 20;
+  const gapAfterLine = typeof state.gapAfterLine === 'number' ? state.gapAfterLine : 18;
+
+  const ink = rgb(0.11, 0.10, 0.09);
+  const muted = rgb(0.42, 0.40, 0.36);
+  const accent = rgb(0.62, 0.35, 0.10);
+  const hair = rgb(0.78, 0.75, 0.68);
+  const silhouetteColor = rgb(0.66, 0.61, 0.53);
+
+  // ---------- Cover page ----------
+  if (onProgress) onProgress('Building cover page', 5);
+  const cover = pdfDoc.addPage([PAGE_W, PAGE_H]);
+  let cy = PAGE_H - 110;
+  const nameSize = 30;
+  const campNameClean = sanitizeForPdf(state.campName);
+  cover.drawText(campNameClean, {
+    x: (PAGE_W - fHeavy.widthOfTextAtSize(campNameClean, nameSize)) / 2,
+    y: cy, size: nameSize, font: fHeavy, color: ink
+  });
+  cy -= 30;
+  const campSubtitleClean = sanitizeForPdf(state.campSubtitle);
+  if (campSubtitleClean){
+    cover.drawText(campSubtitleClean, {
+      x: (PAGE_W - fSerif.widthOfTextAtSize(campSubtitleClean, 15)) / 2,
+      y: cy, size: 15, font: fSerif, color: muted
+    });
+    cy -= 40;
+  } else cy -= 20;
+
+  if (state.coverImageBytes){
+    try {
+      const img = state.coverImageType === 'png'
+        ? await pdfDoc.embedPng(state.coverImageBytes)
+        : await pdfDoc.embedJpg(state.coverImageBytes);
+      const maxW = PAGE_W - 140, maxH = 430;
+      const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+      const w = img.width * scale, h = img.height * scale;
+      const x = (PAGE_W - w) / 2;
+      cy -= h;
+      cover.drawImage(img, { x, y: cy, width: w, height: h });
+      cover.drawRectangle({ x, y: cy, width: w, height: h, borderColor: hair, borderWidth: 1 });
+      cy -= 26;
+    } catch(e){ console.warn('cover image embed failed', e); }
+  }
+
+  if (state.coverQuote){
+    const qLines = wrapText(fSerifItalic, 12.5, PAGE_W - 160, state.coverQuote);
+    qLines.forEach(line => {
+      cover.drawText(line, { x: (PAGE_W - fSerifItalic.widthOfTextAtSize(line, 12.5)) / 2, y: cy, size: 12.5, font: fSerifItalic, color: ink });
+      cy -= 17;
+    });
+    cy -= 6;
+  }
+  const coverCreditClean = sanitizeForPdf(state.coverCredit);
+  if (coverCreditClean){
+    cover.drawText(coverCreditClean, {
+      x: (PAGE_W - fItalic.widthOfTextAtSize(coverCreditClean, 9.5)) / 2,
+      y: cy, size: 9.5, font: fItalic, color: muted
+    });
+  }
+  const coverFooter = [campNameClean, campSubtitleClean].filter(Boolean).join('  \u2014  ');
+  if (coverFooter){
+    cover.drawText(coverFooter, {
+      x: (PAGE_W - fReg.widthOfTextAtSize(coverFooter, 9)) / 2,
+      y: 44, size: 9, font: fReg, color: muted
+    });
+  }
+
+  // ---------- Pre-embed all matched photos as square thumbnails ----------
+  if (onProgress) onProgress('Preparing photos', 15);
+  const withPhotos = state.roster.filter(p => p.photo);
+  const embeddedImages = new Map(); // person.id -> pdf-lib image
+  const embedErrors = [];
+  for (let i = 0; i < withPhotos.length; i++){
+    const p = withPhotos[i];
+    try {
+      const sq = await cropToSquareJpeg(p.photo.blob, 300, p.cropRect, p.manualRotation);
+      const img = await pdfDoc.embedJpg(sq);
+      embeddedImages.set(p.id, img);
+    } catch(e){
+      console.warn('photo embed failed for', p.first, p.last, e);
+      embedErrors.push(`${p.first} ${p.last}: ${e && e.message ? e.message : e}`);
+    }
+    if (onProgress) onProgress(`Preparing photos (${i + 1}/${withPhotos.length})`, 15 + Math.round((i / Math.max(1, withPhotos.length)) * 25));
+  }
+  if (embedErrors.length){
+    console.warn(`${embedErrors.length} of ${withPhotos.length} photos failed to embed:`, embedErrors);
+  }
+
+  // ---------- Layout state ----------
+  let page = null, col = 0, colY = [COL_TOP, COL_TOP], pageNum = 0;
+  const colX = [MARGIN_X, MARGIN_X + COL_W + COL_GAP];
+
+  function drawChrome(sectionLabel){
+    pageNum++;
+    const labelW = dividerFont.widthOfTextAtSize(sectionLabel.toUpperCase(), dividerSize) + 16;
+    page.drawRectangle({ x: MARGIN_X, y: PAGE_H - 44, width: labelW, height: dividerSize + 8.5, borderColor: hair, borderWidth: 1 });
+    page.drawText(sectionLabel.toUpperCase(), { x: MARGIN_X + 8, y: PAGE_H - 44 + (dividerSize + 8.5 - dividerSize) / 2 + 1, size: dividerSize, font: dividerFont, color: ink });
+
+    const titleText = sanitizeForPdf([state.campName, state.campSubtitle].filter(Boolean).join('  \u00b7  '));
+    if (titleText){
+      page.drawText(titleText, {
+        x: PAGE_W - MARGIN_X - hfFont.widthOfTextAtSize(titleText, hfSize),
+        y: PAGE_H - 39, size: hfSize, font: hfFont, color: muted
+      });
+    }
+
+    page.drawText(`Page ${pageNum}`, { x: MARGIN_X, y: 32, size: hfSize, font: hfFont, color: muted });
+    const footerText = sanitizeForPdf([state.footerLine || state.campSubtitle || state.campName].filter(Boolean).join(''));
+    if (footerText){
+      page.drawText(footerText, {
+        x: PAGE_W - MARGIN_X - hfFont.widthOfTextAtSize(footerText, hfSize),
+        y: 32, size: hfSize, font: hfFont, color: muted
+      });
+    }
+  }
+
+  function newPage(sectionLabel){
+    page = pdfDoc.addPage([PAGE_W, PAGE_H]);
+    col = 0; colY = [COL_TOP, COL_TOP];
+    drawChrome(sectionLabel);
+  }
+
+  // Gender-neutral head-and-shoulders placeholder icon, using the user-provided
+  // vector artwork (single closed path, 480x480 viewBox), recolored to match the
+  // app's palette instead of its original fill.
+  const SILHOUETTE_PATH = "M324.56,328.478l125.044,33.38c9.17,0 0,66.761 0,66.761c0,18.423 -16.087,33.38 -35.902,33.38l-330.16,0c-19.815,0 -35.902,-14.957 -35.902,-33.38l0,-66.761c0,-2.327 0,0 0,0l118.333,-33.38c-48.226,-28.658 -80.754,-82.634 -80.754,-144.44c0,-91.771 71.715,-166.278 160.047,-166.278c88.332,0 160.047,74.507 160.047,166.278c0,61.806 -32.528,115.782 -80.754,144.44Z";
+  function drawSilhouette(x, topY, size){
+    page.drawSvgPath(SILHOUETTE_PATH, { x, y: topY, scale: size / 480, color: silhouetteColor });
+  }
+
+  function measureEntry(p){
+    const headerX = colX[0] + PHOTO_SIZE + 10; // width only, x doesn't matter for measuring
+    const headerW = COL_W - PHOTO_SIZE - 10;
+    const nameLines = wrapText(personNameFont, personNameSize, headerW, `${p.first} ${p.last}`.trim());
+
+    const metaEntries = [];
+    const ageLine = formatAgeLine(p.dob, state.ageRefDate);
+    if (ageLine) metaEntries.push(sanitizeForPdf(ageLine));
+    const address = sanitizeForPdf(p.address);
+    if (address) metaEntries.push(address);
+    const loc = sanitizeForPdf([p.city, p.state].filter(Boolean).join(', '));
+    if (loc) metaEntries.push(loc);
+    const contact = sanitizeForPdf([p.phone, p.email].filter(Boolean).join('   \u00b7   '));
+    if (contact) metaEntries.push(contact);
+    const isHost = /^y/i.test(p.hostFamily || '');
+    if (isHost) metaEntries.push('Host Family');
+
+    // Wrap each meta entry individually so a long email/phone combo rolls onto its
+    // own next line instead of running past the column edge.
+    const metaLines = [];
+    metaEntries.forEach((entry, entryIdx) => {
+      const entryIsHost = isHost && entryIdx === metaEntries.length - 1;
+      wrapText(metaFont, metaSize, headerW, entry).forEach(line => {
+        if (line) metaLines.push({ text: line, isHost: entryIsHost });
+      });
+    });
+
+    let headerH = nameLines.length * personNameLineH + 4;
+    headerH += metaLines.length * metaLineH;
+
+    const bioLines = wrapText(bioFont, bioSize, COL_W, p.bio || '');
+    const bioH = bioLines.length * bioLineH;
+
+    const entryH = Math.max(PHOTO_SIZE, headerH) + 10 + bioH + gapBeforeLine + gapAfterLine;
+    return { nameLines, metaLines, bioLines, headerH, bioH, entryH, isHost };
+  }
+
+  function drawEntry(p, x, yTop, measured){
+    const { nameLines, metaLines, bioLines, headerH } = measured;
+    const img = embeddedImages.get(p.id);
+    const blockH = Math.max(PHOTO_SIZE, headerH);
+    const photoTop = yTop;
+    if (img){
+      page.drawImage(img, { x, y: photoTop - PHOTO_SIZE, width: PHOTO_SIZE, height: PHOTO_SIZE });
+      page.drawRectangle({ x, y: photoTop - PHOTO_SIZE, width: PHOTO_SIZE, height: PHOTO_SIZE, borderColor: hair, borderWidth: 1 });
+    } else {
+      page.drawRectangle({ x, y: photoTop - PHOTO_SIZE, width: PHOTO_SIZE, height: PHOTO_SIZE, borderColor: hair, borderWidth: 1, color: rgb(0.93, 0.90, 0.84) });
+      if (state.showSilhouette) drawSilhouette(x, photoTop, PHOTO_SIZE);
+    }
+
+    const headerX = x + PHOTO_SIZE + 10;
+    const headerW = COL_W - PHOTO_SIZE - 10;
+    let ty = photoTop - 10;
+    nameLines.forEach(line => {
+      page.drawText(line, { x: headerX, y: ty, size: personNameSize, font: personNameFont, color: ink, maxWidth: headerW });
+      ty -= personNameLineH;
+    });
+    ty -= 2;
+    metaLines.forEach(({ text, isHost }) => {
+      page.drawText(text, {
+        x: headerX, y: ty, size: metaSize,
+        font: metaFont,
+        color: isHost ? accent : muted
+      });
+      ty -= metaLineH;
+    });
+
+    let by = yTop - blockH - 10;
+    bioLines.forEach(line => {
+      if (line){
+        page.drawText(line, { x, y: by, size: bioSize, font: bioFont, color: ink });
+      }
+      by -= bioLineH;
+    });
+
+    const dividerY = by - gapBeforeLine;
+    page.drawLine({ start: { x, y: dividerY }, end: { x: x + COL_W, y: dividerY }, thickness: 0.6, color: hair });
+  }
+
+  function placeSection(entries, sectionLabel){
+    if (!entries.length) return;
+    newPage(sectionLabel);
+    entries.forEach(p => {
+      const measured = measureEntry(p);
+      if (colY[col] - measured.entryH < MARGIN_BOTTOM){
+        if (col === 0){ col = 1; }
+        else { newPage(sectionLabel); }
+      }
+      drawEntry(p, colX[col], colY[col], measured);
+      colY[col] -= measured.entryH;
+    });
+  }
+
+  if (onProgress) onProgress('Laying out campers', 45);
+  const campers = state.roster.filter(p => p.group === 'camper').sort((a, b) => a.first.localeCompare(b.first));
+  placeSection(campers, 'Campers');
+
+  if (onProgress) onProgress('Laying out staff', 75);
+  const staff = state.roster.filter(p => p.group === 'staff').sort((a, b) => a.first.localeCompare(b.first));
+  placeSection(staff, 'Staff');
+
+  if (onProgress) onProgress('Finalizing PDF', 95);
+  const bytes = await pdfDoc.save();
+  return { bytes, photosEmbedded: embeddedImages.size, photosAttempted: withPhotos.length, embedErrors };
+}
+
+document.getElementById('generateBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('generateBtn');
+  const genPanel = document.getElementById('genPanel');
+  const genTitle = document.getElementById('genTitle');
+  const genSub = document.getElementById('genSub');
+  const genBarFill = document.getElementById('genBarFill');
+  btn.disabled = true;
+  genPanel.classList.add('active');
+  try {
+    const result = await generateDirectoryPDF((label, pct) => {
+      genSub.textContent = label;
+      genBarFill.style.width = pct + '%';
+    });
+    const blob = new Blob([result.bytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const safeName = (state.campName || 'camp-directory').replace(/[^\w\- ]+/g, '').trim() || 'camp-directory';
+    a.download = `${safeName}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    genTitle.textContent = 'Done';
+    if (result.photosAttempted > 0 && result.photosEmbedded < result.photosAttempted){
+      genSub.textContent = `Downloaded, but only ${result.photosEmbedded} of ${result.photosAttempted} photos embedded. First error: ${result.embedErrors[0] || 'unknown'}`;
+    } else {
+      genSub.textContent = result.photosAttempted
+        ? `Your directory has downloaded, with ${result.photosEmbedded} photos.`
+        : 'Your directory has downloaded.';
+    }
+  } catch(err){
+    console.error(err);
+    genTitle.textContent = 'Something went wrong';
+    genSub.textContent = err.message || String(err);
+  } finally {
+    btn.disabled = false;
+    setTimeout(() => genPanel.classList.remove('active'), 1500);
+  }
+});
+</script>
+</body>
+</html>
