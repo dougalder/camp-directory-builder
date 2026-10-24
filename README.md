@@ -1,4 +1,5 @@
 # Camp Directory Builder
+[🚀 Launch Camp Directory Builder](https://dougalder.github.io/camp-directory-builder/camp-directory-builder.html)
 
 **Turn a spreadsheet of names and a PDF (or folder) of photos into a finished, print-ready camp directory — right in your web browser.**
 
