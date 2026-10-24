@@ -1,6 +1,6 @@
 # Camp Directory Builder
 
-### ▶️ [Open Camp Directory Builder](https://YOUR-USERNAME.github.io/dougalder/camp-directory-builder.html)
+### ▶️ [Open Camp Directory Builder](https://dougalder.github.io/camp-directory-builder/camp-directory-builder.html)
 **Turn a spreadsheet of names and a PDF full of photos into a finished, print-ready camp directory — right in your web browser.**
 
 Camp Directory Builder was made for Not Back to School Camp (NBTSC), but it works for any camp, retreat, club, or group that wants a printed "who's who" booklet with a photo, contact details, and a short bio for every person.
