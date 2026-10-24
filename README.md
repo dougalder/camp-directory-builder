@@ -83,20 +83,7 @@ The first row of your CSV must be column headings. The app looks for these names
 
 ("GI" comes from the registration system NBTSC uses — it just means "General Information." The app also recognizes simpler headings like `Email`, `City`, or `Bio`, but the names above are the safest choice.)
 
-See the [User Manual](MANUAL.md#preparing-your-roster-csv) for more detail and examples.
-
----
-
-## Putting it online (optional)
-
-You don't need to put the app online — it runs perfectly well from a file on your computer. But if you'd like a web address you can share with other organizers, GitHub can host it for free using a feature called **GitHub Pages**:
-
-1. Make sure this repository is **public** (free GitHub accounts can only use Pages on public repositories). Check first that the repository contains **no real roster, photo PDF, or finished directory**.
-2. Go to **Settings → Pages**.
-3. Under **Source**, choose **Deploy from a branch**, pick the `main` branch and the `/ (root)` folder, then click **Save**.
-4. After a minute or two, GitHub shows you a link like `https://your-username.github.io/camp-directory-builder/camp-directory-builder.html`.
-
-Even when it's hosted online, the app still does all of its work inside each visitor's own browser. **No roster data or photos are ever sent to GitHub or anyone else.**
+See the [User Manual](MANUAL.md#preparing-your-roster-csv) for more detail and 
 
 ---
 
