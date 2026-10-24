@@ -1,14 +1,24 @@
 # Camp Directory Builder
 
-### ▶️ [Open Camp Directory Builder](https://dougalder.github.io/camp-directory-builder/camp-directory-builder.html)
-**Turn a spreadsheet of names and a PDF full of photos into a finished, print-ready camp directory — right in your web browser.**
+**Turn a spreadsheet of names and a PDF (or folder) of photos into a finished, print-ready camp directory — right in your web browser.**
+
+<table>
+  <tr>
+    <td width="58%"><img src="screenshots/07-match-review-table.png" alt="The app matching photos to names"></td>
+    <td width="42%"><img src="screenshots/14-directory-campers-page.png" alt="A page of the finished directory"></td>
+  </tr>
+  <tr>
+    <td align="center"><em>The app matches each photo to the right person…</em></td>
+    <td align="center"><em>…and lays out the finished directory for printing.</em></td>
+  </tr>
+</table>
 
 Camp Directory Builder was made for Not Back to School Camp (NBTSC), but it works for any camp, retreat, club, or group that wants a printed "who's who" booklet with a photo, contact details, and a short bio for every person.
 
 You give it two things:
 
 1. **A roster** — a spreadsheet saved as a CSV file (one row per person).
-2. **A photo PDF** — a PDF where each person's photo appears on a page alongside their name.
+2. **Photos** — either a PDF where each person's photo appears on a page alongside their name, or a folder of photo files named after each person.
 
 It gives you back one thing: **a polished PDF directory**, laid out in two columns, with Campers and Staff in separate sections, everyone sorted alphabetically by first name, and blank space left under each listing so people can write notes by hand once it's printed.
 
@@ -16,13 +26,15 @@ It gives you back one thing: **a polished PDF directory**, laid out in two colum
 > - **CSV** stands for *Comma-Separated Values*. It's a plain-text version of a spreadsheet. Excel, Numbers, and Google Sheets can all save or export one ("File → Export → CSV" or "Download → .csv").
 > - **PDF** stands for *Portable Document Format*. It's the standard file type for documents meant to be printed or shared and look the same on every computer.
 
+*All screenshots in this README and the manual use made-up sample people, not real campers.*
+
 ---
 
 ## Highlights
 
-- **Four simple steps** — Camp Details → Roster → Photos → Generate. A tab bar across the top shows where you are.
+- **Four simple steps** — Camp Details → Roster CSV → Photos → Export. A tab bar across the top shows where you are.
 - **Automatic Camper / Staff sorting** — the app reads each person's registration info and figures out which group they belong to. You can change anyone with a dropdown.
-- **Automatic photo matching** — the app pulls each photo out of your PDF, reads the name printed on the same page, and attaches the photo to the right person. It tolerates small typos ("Jon" vs "John").
+- **Automatic photo matching** — the app pulls each photo out of your PDF, reads the name printed on the same page, and attaches the photo to the right person. It tolerates small typos ("Feliks" vs "Felix"). You can also drop in a folder of photos named after each person.
 - **Photo editor** — crop, zoom, rotate, or swap in a different photo for anyone.
 - **Listing editor** — fix a typo, update an email, or rewrite a bio without going back to the spreadsheet.
 - **Save your edits** — export everything you changed back out as a new CSV so you never lose your work.
@@ -42,10 +54,12 @@ It gives you back one thing: **a polished PDF directory**, laid out in two colum
 2. **Double-click** the file. It opens in your web browser. There's nothing to install.
 3. **Step 1 – Camp Details:** type your camp name, subtitle, and footer text. Optionally add a cover photo and quote.
 4. **Step 2 – Roster CSV:** drag your roster CSV onto the drop area (or click it to browse). Check the Camper/Staff list.
-5. **Step 3 – Photo PDF:** drag in your photo PDF. Wait while the app extracts and matches photos, then fix anyone marked "No Photo."
-6. **Step 4 – Generate:** click **Generate Directory PDF**. Your finished directory downloads to your Downloads folder.
+5. **Step 3 – Photos:** drag in your photo PDF (or a folder of photos). Wait while the app matches photos, then fix anyone marked "No Photo."
+6. **Step 4 – Export:** click **Generate Directory PDF**. Your finished directory downloads to your Downloads folder.
 
-📖 **For full, step-by-step instructions, see the [User Manual](MANUAL.md).**
+![The opening screen of Camp Directory Builder](screenshots/01-opening-screen.png)
+
+📖 **For full, step-by-step instructions with pictures of every screen, see the [User Manual](MANUAL.md).**
 
 ---
 
@@ -67,7 +81,7 @@ The first row of your CSV must be column headings. The app looks for these names
 | `GI Host Family` | "Yes" if the person is a host family | No |
 | `GI Directory Bio` | The short paragraph the person wrote about themselves | No |
 
-("GI" comes from the registration system NBTSC uses — it just means "General Information." Keep the headings exactly as shown.)
+("GI" comes from the registration system NBTSC uses — it just means "General Information." The app also recognizes simpler headings like `Email`, `City`, or `Bio`, but the names above are the safest choice.)
 
 See the [User Manual](MANUAL.md#preparing-your-roster-csv) for more detail and examples.
 
@@ -77,9 +91,10 @@ See the [User Manual](MANUAL.md#preparing-your-roster-csv) for more detail and e
 
 You don't need to put the app online — it runs perfectly well from a file on your computer. But if you'd like a web address you can share with other organizers, GitHub can host it for free using a feature called **GitHub Pages**:
 
-1. In this repository, go to **Settings → Pages**.
-2. Under **Source**, choose **Deploy from a branch**, pick the `main` branch and the `/ (root)` folder, then click **Save**.
-3. After a minute or two, GitHub shows you a link like `https://your-username.github.io/camp-directory-builder/camp-directory-builder.html`.
+1. Make sure this repository is **public** (free GitHub accounts can only use Pages on public repositories). Check first that the repository contains **no real roster, photo PDF, or finished directory**.
+2. Go to **Settings → Pages**.
+3. Under **Source**, choose **Deploy from a branch**, pick the `main` branch and the `/ (root)` folder, then click **Save**.
+4. After a minute or two, GitHub shows you a link like `https://your-username.github.io/camp-directory-builder/camp-directory-builder.html`.
 
 Even when it's hosted online, the app still does all of its work inside each visitor's own browser. **No roster data or photos are ever sent to GitHub or anyone else.**
 
@@ -87,11 +102,12 @@ Even when it's hosted online, the app still does all of its work inside each vis
 
 ## What's in this repository
 
-| File | What it is |
+| File or folder | What it is |
 |---|---|
 | `camp-directory-builder.html` | The entire app, in one file. |
 | `README.md` | This page — an overview. |
 | `MANUAL.md` | The full user manual with step-by-step instructions, tips, and troubleshooting. |
+| `screenshots/` | The pictures used in this README and the manual (made with invented sample data). |
 
 ---
 
@@ -117,7 +133,7 @@ Camp directories contain children's names, photos, addresses, and phone numbers.
 - When you close the browser tab, everything the app was holding is gone.
 - The only files that come out are the ones *you* choose to download (the directory PDF, the edits CSV, or the photos ZIP).
 
-Please still handle the finished PDF with care — share it only with the people it's meant for.
+Please still handle the finished PDF with care — share it only with the people it's meant for, and never upload a real roster or directory to this repository.
 
 ---
 
@@ -126,7 +142,7 @@ Please still handle the finished PDF with care — share it only with the people
 | Browser | Works? |
 |---|---|
 | Safari (Mac) | ✅ |
-| Safari (iPhone / iPad) | ✅ — large rosters may be slower on older devices |
+| Safari (iPhone / iPad) | ✅ — use a photo PDF (picking a whole folder isn't supported on iPhone/iPad); large rosters may be slower on older devices |
 | Chrome | ✅ |
 | Firefox | ✅ |
 | Microsoft Edge | ✅ |
